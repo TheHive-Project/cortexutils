@@ -2,6 +2,7 @@
 # encoding: utf-8
 
 import json
+import os
 from cortexutils.worker import Worker
 from cortexutils.extractor import Extractor
 
@@ -22,7 +23,7 @@ class Analyzer(Worker):
 
         :return: Data (observable value) given through Cortex"""
         if self.data_type == 'file':
-            return self.get_param('filename', None, 'Missing filename.')
+            return self.get_param('filename', None, 'Missing filename.')  # FIXME
         return self.get_param('data', None, 'Missing data field')
 
     def build_taxonomy(self, level, namespace, predicate, value):
@@ -76,7 +77,9 @@ class Analyzer(Worker):
             'artifacts': self.artifacts(full_report),
             'full': full_report
         }
-        json.dump(report, self.fpoutput, ensure_ascii=ensure_ascii)
+        os.makedirs('/job/output')
+        with open('/job/output/output.json') as f_output:
+            json.dump(report, f_output, ensure_ascii=ensure_ascii)
 
     def run(self):
         """Overwritten by analyzers"""

@@ -2,6 +2,7 @@
 # encoding: utf-8
 
 import json
+import os
 from cortexutils.worker import Worker
 
 
@@ -56,7 +57,9 @@ class Responder(Worker):
             'full': full_report,
             'operations': operation_list
         }
-        json.dump(report, self.fpoutput, ensure_ascii=ensure_ascii)
+        os.makedirs('/job/output')
+        with open('/job/output/output.json') as f_output:
+            json.dump(report, f_output, ensure_ascii=ensure_ascii)
 
     def run(self):
         """Overwritten by responders"""

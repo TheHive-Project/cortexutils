@@ -9,15 +9,12 @@ import json
 class Worker:
 
     def __init__(self):
-        self.__set_encoding()
-
-        # Prepare in/out/err streams
-        self.fperror = sys.stderr
-        self.fpinput = sys.stdin
-        self.fpoutput = sys.stdout
 
         # Load input
-        self._input = json.load(self.fpinput)
+        if not os.path.isfile('/job/input/input.json'):
+            self.error('Input file doesn''t exist')
+        with open('/job/input/input.json') as f_input:
+            self._input = json.load(f_input)
 
         # Set parameters
         self.data_type = self.get_param('dataType', None, 'Missing dataType field')
@@ -48,22 +45,6 @@ class Worker:
             os.environ['http_proxy'] = self.http_proxy
         if self.https_proxy is not None:
             os.environ['https_proxy'] = self.https_proxy
-
-    @staticmethod
-    def __set_encoding():
-        try:
-            if sys.stdout.encoding != 'UTF-8':
-                if sys.version_info[0] == 3:
-                    sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
-                else:
-                    sys.stdout = codecs.getwriter('utf-8')(sys.stdout, 'strict')
-            if sys.stderr.encoding != 'UTF-8':
-                if sys.version_info[0] == 3:
-                    sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, 'strict')
-                else:
-                    sys.stderr = codecs.getwriter('utf-8')(sys.stderr, 'strict')
-        except Exception:
-            pass
 
     def __get_param(self, source, name, default=None, message=None):
         """Extract a specific parameter from given source.
@@ -101,7 +82,7 @@ class Worker:
     def get_data(self):
         """Wrapper for getting data from input dict.
 
-        :return: Data (observable value) given through Cortex"""        
+        :return: Data (observable value) given through Cortex"""
         return self.get_param('data', None, 'Missing data field')
 
     def get_param(self, name, default=None, message=None):
@@ -128,14 +109,25 @@ class Worker:
         if 'api_key' in analyzer_input.get('config', {}):
             analyzer_input['config']['api_key'] = 'REMOVED'
 
-        json.dump({'success': False,
-                   'input': analyzer_input,
-                   'errorMessage': message},
-                  self.fpoutput,
-                  ensure_ascii=ensure_ascii)
+        os.makedirs('/job/output')
+        with open('/job/output/output.json') as f_output:
+            json.dump({'success': False,
+                       'input': analyzer_input,
+                       'errorMessage': message},
+                      f_output,
+                      ensure_ascii=ensure_ascii)
 
         # Force exit after error
         sys.exit(1)
+
+    def summary(self, raw):
+        """Returns a summary, needed for 'short.html' template. Overwrite it for your needs!
+
+        :returns: by default return an empty dict"""
+        return {}
+
+    def artifacts(self, raw):
+        return []
 
     def report(self, full_report, ensure_ascii=False):
         """Returns a json dict via stdout.
@@ -155,7 +147,9 @@ class Worker:
             'artifacts': self.artifacts(full_report),
             'full': full_report
         }
-        json.dump(report, self.fpoutput, ensure_ascii=ensure_ascii)
+        os.makedirs('/job/output')
+        with open('/job/output/output.json') as f_output:
+            json.dump(report, f_output, ensure_ascii=ensure_ascii)
 
     def run(self):
         """Overwritten by analyzers"""
