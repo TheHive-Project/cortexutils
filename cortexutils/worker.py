@@ -11,6 +11,7 @@ class Worker:
     def __init__(self):
 
         # Load input
+        self._input = {}
         if not os.path.isfile('/job/input/input.json'):
             self.error('Input file doesn''t exist')
         with open('/job/input/input.json') as f_input:
