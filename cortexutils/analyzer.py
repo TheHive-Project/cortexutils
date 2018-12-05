@@ -77,7 +77,7 @@ class Analyzer(Worker):
             'artifacts': self.artifacts(full_report),
             'full': full_report
         }
-        os.makedirs('/job/output')
+        os.makedirs('/job/output', exist_ok=True)
         with open('/job/output/output.json') as f_output:
             json.dump(report, f_output, ensure_ascii=ensure_ascii)
 
