@@ -149,7 +149,7 @@ class Worker:
             'full': full_report
         }
         os.makedirs('/job/output', exist_ok=True)
-        with open('/job/output/output.json') as f_output:
+        with open('/job/output/output.json', mode='w') as f_output:
             json.dump(report, f_output, ensure_ascii=ensure_ascii)
 
     def run(self):
