@@ -111,7 +111,7 @@ class Worker:
             analyzer_input['config']['api_key'] = 'REMOVED'
 
         os.makedirs('/job/output', exist_ok=True)
-        with open('/job/output/output.json') as f_output:
+        with open('/job/output/output.json', mode='w') as f_output:
             json.dump({'success': False,
                        'input': analyzer_input,
                        'errorMessage': message},
