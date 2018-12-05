@@ -110,7 +110,7 @@ class Worker:
         if 'api_key' in analyzer_input.get('config', {}):
             analyzer_input['config']['api_key'] = 'REMOVED'
 
-        os.makedirs('/job/output')
+        os.makedirs('/job/output', exist_ok=True)
         with open('/job/output/output.json') as f_output:
             json.dump({'success': False,
                        'input': analyzer_input,
