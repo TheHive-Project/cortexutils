@@ -41,7 +41,7 @@ class Analyzer(Worker):
                 'namespace': namespace,
                 'predicate': predicate,
                 'value': value
-                }    
+                }
 
     def summary(self, raw):
         """Returns a summary, needed for 'short.html' template. Overwrite it for your needs!
@@ -52,10 +52,7 @@ class Analyzer(Worker):
     def artifacts(self, raw):
         # Use the regex extractor, if auto_extract setting is not False
         if self.auto_extract:
-            try:
-                extractor = EnhancedExtractor(ignore=self.get_data())
-            except:
-                extractor = Extractor(ignore=self.get_data())
+            extractor = Extractor(ignore=self.get_data())
             return extractor.check_iterable(raw)
 
         # Return empty list

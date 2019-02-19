@@ -25,7 +25,6 @@ class Extractor:
         self.ignore = ignore
         self.regex = self.__init_regex()
         self.ftregex = self.__init_ft_regex()
-        self.asregex = self.__init_analyzer_regex()
 
     @staticmethod
     def __init_regex():
@@ -119,11 +118,9 @@ class Extractor:
 
         return regex
 
-        @staticmethod
-        def __init_ft_regex():
-        
-        logging.info("Preparing full text regex statements")
-        
+    @staticmethod
+    def __init_ft_regex():
+
         """
         Returns compiled full text regex list.
 
@@ -132,34 +129,32 @@ class Extractor:
         """
 
         #### Generic regexes
-        
+
         # IPv4
-        regex = [{
+        ftregex = [{
             'types': ['ip'],
             'regex': re.compile(r'(?:^|\D)((?:25[0-5]|2[0-4]\d|[1]\d\d|[1-9]\d|[0-9])\.(?:25[0-5]|2[0-4]\d|[1]\d\d|[1-9]\d|[0-9])\.(?:25[0-5]|2[0-4]\d|[1]\d\d|[1-9]\d|[0-9])\.(?:25[0-5]|2[0-4]\d|[1]\d\d|[1-9]\d|[0-9]))(?:\D|$)', re.MULTILINE)
         }]
 
         # URL
-        regex.append({
+        ftregex.append({
             'types': ['url','fqdn','domain','uri_path'],
             'regex': re.compile(r'((?:http|https):\/\/((?:(?:.*?)\.)?(.*?(?:\.\w+)+))\/?([a-zA-Z0-9\/\-\_\.\~\=\?]+\??)?)', re.MULTILINE)
         })
 
         # mail
-        regex.append({
+        ftregex.append({
             'types': ['mail','domain'],
             'regex': re.compile(r'((?:[a-zA-Z0-9\/\-\_\.\+]+)@{1}([a-zA-Z0-9\-\_]+\.[a-zA-Z0-9\-\_\.]+)+)', re.MULTILINE)
         })
-        
+
         ### Mail Specific regexes
 
-        return regex
+        return ftregex
 
     @staticmethod
     def __init_analyzer_regex():
-        
-        logging.info("Preparing analyzer specific regex statements place holder")
-        
+
         """
         Returns False when the analyzer has no analyzer specific regexes.
 
@@ -167,9 +162,9 @@ class Extractor:
         :rtype: list
         """
 
-        self.empty_list = []
+        empty_list = []
 
-        return self.empty_list
+        return empty_list
 
     def __findftmatch(self, value):
         """Checks if the given value is contains regexes
@@ -181,13 +176,11 @@ class Extractor:
         """
         self.found_observables = []
         if isinstance(value, (str, unicode)):
-            self.regexpack = []
-            self.regexpack.append(self.ftregex)
-            self.regexpack.append(self.asregex)
+            self.regexpack = self.ftregex + self.asregex
             for r in self.regexpack:
-                matches = re.findall(r.get('regex'), value)
-                if len(matches) > 0:
-                    for found_observable in matches:
+                self.hits = re.findall(r.get('regex'), value)
+                if len(self.hits) > 0:
+                    for found_observable in self.hits:
                         if isinstance(found_observable, tuple):
                             i = 0
                             for groups in found_observable:
@@ -272,7 +265,7 @@ class Extractor:
                             'value': item
                         })
                     #Check full text for regex matches
-                    matches = self.__findftmatch(iterable)
+                    matches = self.__findftmatch(item)
                     if len(matches) > 0:
                         results.extend(matches)
         elif isinstance(iterable, dict):
@@ -287,7 +280,7 @@ class Extractor:
                             'value': item
                         })
                     #Check full text for regex matches
-                    matches = self.__findftmatch(iterable)
+                    matches = self.__findftmatch(item)
                     if len(matches) > 0:
                         results.extend(matches)
         else:
