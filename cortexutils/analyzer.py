@@ -41,7 +41,7 @@ class Analyzer(Worker):
                 'namespace': namespace,
                 'predicate': predicate,
                 'value': value
-                }    
+                }
 
     def summary(self, raw):
         """Returns a summary, needed for 'short.html' template. Overwrite it for your needs!
