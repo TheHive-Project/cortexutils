@@ -24,6 +24,8 @@ class Extractor:
     def __init__(self, ignore=None):
         self.ignore = ignore
         self.regex = self.__init_regex()
+        self.ftregex = self.__init_ft_regex()
+        self.asregex = self.__init_analyzer_regex()
 
     @staticmethod
     def __init_regex():
@@ -117,6 +119,93 @@ class Extractor:
 
         return regex
 
+        @staticmethod
+        def __init_ft_regex():
+        
+        logging.info("Preparing full text regex statements")
+        
+        """
+        Returns compiled full text regex list.
+
+        :return: List of {type, regex} dicts
+        :rtype: list
+        """
+
+        #### Generic regexes
+        
+        # IPv4
+        regex = [{
+            'types': ['ip'],
+            'regex': re.compile(r'(?:^|\D)((?:25[0-5]|2[0-4]\d|[1]\d\d|[1-9]\d|[0-9])\.(?:25[0-5]|2[0-4]\d|[1]\d\d|[1-9]\d|[0-9])\.(?:25[0-5]|2[0-4]\d|[1]\d\d|[1-9]\d|[0-9])\.(?:25[0-5]|2[0-4]\d|[1]\d\d|[1-9]\d|[0-9]))(?:\D|$)', re.MULTILINE)
+        }]
+
+        # URL
+        regex.append({
+            'types': ['url','fqdn','domain','uri_path'],
+            'regex': re.compile(r'((?:http|https):\/\/((?:(?:.*?)\.)?(.*?(?:\.\w+)+))\/?([a-zA-Z0-9\/\-\_\.\~\=\?]+\??)?)', re.MULTILINE)
+        })
+
+        # mail
+        regex.append({
+            'types': ['mail','domain'],
+            'regex': re.compile(r'((?:[a-zA-Z0-9\/\-\_\.\+]+)@{1}([a-zA-Z0-9\-\_]+\.[a-zA-Z0-9\-\_\.]+)+)', re.MULTILINE)
+        })
+        
+        ### Mail Specific regexes
+
+        return regex
+
+    @staticmethod
+    def __init_analyzer_regex():
+        
+        logging.info("Preparing analyzer specific regex statements place holder")
+        
+        """
+        Returns False when the analyzer has no analyzer specific regexes.
+
+        :return: Empty list
+        :rtype: list
+        """
+
+        self.empty_list = []
+
+        return self.empty_list
+
+    def __findftmatch(self, value):
+        """Checks if the given value is contains regexes
+
+        :param value: The value to check
+        :type value: str or number
+        :return: Data type of value, if known, else empty string
+        :rtype: str
+        """
+        self.found_observables = []
+        if isinstance(value, (str, unicode)):
+            self.regexpack = []
+            self.regexpack.append(self.ftregex)
+            self.regexpack.append(self.asregex)
+            for r in self.regexpack:
+                matches = re.findall(r.get('regex'), value)
+                if len(matches) > 0:
+                    for found_observable in matches:
+                        if isinstance(found_observable, tuple):
+                            i = 0
+                            for groups in found_observable:
+                                self.found_observables.append({
+                                    'type': r.get('types')[i],
+                                    'value': found_observable[i]
+                                    })
+                                i += 1
+                        else:
+                            self.found_observables.append({
+                                'type': r.get('types')[0],
+                                'value': found_observable
+                                })
+            if len(self.found_observables) > 0:
+                return self.found_observables
+            else:
+                return ''
+
     def __checktype(self, value):
         """Checks if the given value is a known datatype
 
@@ -167,6 +256,10 @@ class Extractor:
                     'type': dt,
                     'value': iterable
                 })
+            #Check full text for regex matches
+            matches = self.__findftmatch(iterable)
+            if len(matches) > 0:
+                results.extend(matches)
         elif isinstance(iterable, list):
             for item in iterable:
                 if isinstance(item, list) or isinstance(item, dict):
@@ -178,6 +271,10 @@ class Extractor:
                             'type': dt,
                             'value': item
                         })
+                    #Check full text for regex matches
+                    matches = self.__findftmatch(iterable)
+                    if len(matches) > 0:
+                        results.extend(matches)
         elif isinstance(iterable, dict):
             for _, item in iterable.items():
                 if isinstance(item, list) or isinstance(item, dict):
@@ -189,7 +286,24 @@ class Extractor:
                             'type': dt,
                             'value': item
                         })
+                    #Check full text for regex matches
+                    matches = self.__findftmatch(iterable)
+                    if len(matches) > 0:
+                        results.extend(matches)
         else:
             raise TypeError('Not supported type.')
 
+        #Deduplicate results for a cleaner result
+        results = self.deduplicate(results)
         return results
+
+    def deduplicate(self, list_of_objects):
+        dedup_list = []
+        for object in list_of_objects:
+            present = False
+            for new_object in dedup_list:
+                if object['type'] == new_object['type'] and object['value'] == new_object['value']:
+                    present = True
+            if not present:
+                dedup_list.append(object)
+        return dedup_list
