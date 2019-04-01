@@ -3,14 +3,18 @@
 
 import json
 import os
-from cortexutils.worker import Worker
+
 from cortexutils.extractor import Extractor
+from cortexutils.worker import Worker
+from shutil import copyfileobj
+import tempfile
+import ntpath
 
 
 class Analyzer(Worker):
 
-    def __init__(self):
-        Worker.__init__(self)
+    def __init__(self, job_directory=None):
+        Worker.__init__(self, job_directory)
 
         # Not breaking compatibility
         self.artifact = self._input
@@ -59,6 +63,16 @@ class Analyzer(Worker):
         # Return empty list
         return []
 
+    def build_artifact(self, data_type, data, **kwargs):
+        if data_type == 'file':
+            if os.path.isfile(data):
+                (dst, filename) = tempfile.mkstemp(dir=os.path.join(self.job_directory, "output"))
+                with open(data, 'r') as src:
+                    copyfileobj(src, os.fdopen(dst, 'w'))
+                    return {**kwargs, 'dataType': data_type, 'file': ntpath.basename(filename), 'filename': ntpath.basename(data)}
+        else:
+            return {**kwargs, 'dataType': data_type, 'data': data}
+
     def report(self, full_report, ensure_ascii=False):
         """Returns a json dict via stdout.
 
@@ -77,8 +91,8 @@ class Analyzer(Worker):
             'artifacts': self.artifacts(full_report),
             'full': full_report
         }
-        os.makedirs('/job/output', exist_ok=True)
-        with open('/job/output/output.json', mode='w') as f_output:
+        os.makedirs('%s/output' % self.job_directory, exist_ok=True)
+        with open('%s/output/output.json' % self.job_directory, mode='w') as f_output:
             json.dump(report, f_output, ensure_ascii=ensure_ascii)
 
     def run(self):

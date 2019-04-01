@@ -8,8 +8,8 @@ from cortexutils.worker import Worker
 
 class Responder(Worker):
 
-    def __init__(self):
-        Worker.__init__(self)
+    def __init__(self, job_directory=None):
+        Worker.__init__(self, job_directory)
 
         # Not breaking compatibility
         self.artifact = self._input
@@ -57,8 +57,8 @@ class Responder(Worker):
             'full': full_report,
             'operations': operation_list
         }
-        os.makedirs('/job/output', exist_ok=True)
-        with open('/job/output/output.json', mode='w') as f_output:
+        os.makedirs('%s/output' % self.job_directory, exist_ok=True)
+        with open('%s/output/output.json' % self.job_directory, mode='w') as f_output:
             json.dump(report, f_output, ensure_ascii=ensure_ascii)
 
     def run(self):

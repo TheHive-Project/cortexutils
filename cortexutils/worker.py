@@ -8,13 +8,18 @@ import json
 
 class Worker:
 
-    def __init__(self):
-
+    def __init__(self, job_directory):
+        if job_directory is None:
+            if len(sys.argv) > 1:
+                job_directory = sys.argv[1]
+            else:
+                job_directory = '/job'
+        self.job_directory = job_directory
         # Load input
         self._input = {}
-        if not os.path.isfile('/job/input/input.json'):
+        if not os.path.isfile('%s/input/input.json' % self.job_directory):
             self.error('Input file doesn''t exist')
-        with open('/job/input/input.json') as f_input:
+        with open('%s/input/input.json' % self.job_directory) as f_input:
             self._input = json.load(f_input)
 
         # Set parameters
@@ -110,8 +115,8 @@ class Worker:
         if 'api_key' in analyzer_input.get('config', {}):
             analyzer_input['config']['api_key'] = 'REMOVED'
 
-        os.makedirs('/job/output', exist_ok=True)
-        with open('/job/output/output.json', mode='w') as f_output:
+        os.makedirs('%s/output' % self.job_directory, exist_ok=True)
+        with open('%s/output/output.json' % self.job_directory, mode='w') as f_output:
             json.dump({'success': False,
                        'input': analyzer_input,
                        'errorMessage': message},
@@ -148,8 +153,8 @@ class Worker:
             'artifacts': self.artifacts(full_report),
             'full': full_report
         }
-        os.makedirs('/job/output', exist_ok=True)
-        with open('/job/output/output.json', mode='w') as f_output:
+        os.makedirs('%s/output' % self.job_directory, exist_ok=True)
+        with open('%s/output/output.json' % self.job_directory, mode='w') as f_output:
             json.dump(report, f_output, ensure_ascii=ensure_ascii)
 
     def run(self):
