@@ -27,13 +27,18 @@ class Analyzer(Worker):
 
         :return: Data (observable value) given through Cortex"""
         if self.data_type == 'file':
-            filename = self.get_param('filename', None, 'Missing filename.')
-            if self.job_directory is None:
-                path = '%s/input/%s' % (self.job_directory, filename)
-                if os.path.isfile(path):
-                    return path
-            return filename
-        return self.get_param('data', None, 'Missing data field')
+            return self.get_param('filename', None, 'Missing filename.')
+        else:
+            return self.get_param('data', None, 'Missing data field')
+
+    def get_param(self, name, default=None, message=None):
+        data = super(Analyzer, self).get_param(name, default, message)
+        if name == 'file' and self.data_type == 'file' and self.job_directory is not None:
+            path = '%s/input/%s' % (self.job_directory, data)
+            if os.path.isfile(path):
+                return path
+        else:
+            return data
 
     def build_taxonomy(self, level, namespace, predicate, value):
         """
