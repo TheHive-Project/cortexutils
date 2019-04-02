@@ -1,12 +1,15 @@
 #!/usr/bin/env python
 # encoding: utf-8
+
 import os
 import sys
 import codecs
 import json
+import select
 
 
 class Worker:
+    READ_TIMEOUT = 3  # seconds
 
     def __init__(self, job_directory):
         if job_directory is None:
@@ -17,10 +20,17 @@ class Worker:
         self.job_directory = job_directory
         # Load input
         self._input = {}
-        if not os.path.isfile('%s/input/input.json' % self.job_directory):
-            self.error('Input file doesn''t exist')
-        with open('%s/input/input.json' % self.job_directory) as f_input:
-            self._input = json.load(f_input)
+        if os.path.isfile('%s/input/input.json' % self.job_directory):
+            with open('%s/input/input.json' % self.job_directory) as f_input:
+                self._input = json.load(f_input)
+        else:  # If input file doesn't exist, fallback to old behavior and read input from stdin
+            self.job_directory = None
+            self.__set_encoding()
+            r, w, e = select.select([sys.stdin], [], [], self.READ_TIMEOUT)
+            if sys.stdin in r:
+                self._input = json.load(sys.stdin)
+            else:
+                self.error('Input file doesn''t exist')
 
         # Set parameters
         self.data_type = self.get_param('dataType', None, 'Missing dataType field')
@@ -51,6 +61,22 @@ class Worker:
             os.environ['http_proxy'] = self.http_proxy
         if self.https_proxy is not None:
             os.environ['https_proxy'] = self.https_proxy
+
+    @staticmethod
+    def __set_encoding():
+        try:
+            if sys.stdout.encoding != 'UTF-8':
+                if sys.version_info[0] == 3:
+                    sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
+                else:
+                    sys.stdout = codecs.getwriter('utf-8')(sys.stdout, 'strict')
+            if sys.stderr.encoding != 'UTF-8':
+                if sys.version_info[0] == 3:
+                    sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, 'strict')
+                else:
+                    sys.stderr = codecs.getwriter('utf-8')(sys.stderr, 'strict')
+        except Exception:
+            pass
 
     def __get_param(self, source, name, default=None, message=None):
         """Extract a specific parameter from given source.
@@ -85,6 +111,14 @@ class Worker:
 
         return not (self.enable_check_pap and self.pap > self.max_pap)
 
+    def __write_output(self, data, ensure_ascii=False):
+        if self.job_directory is None:
+            json.dump(data, sys.stdout, ensure_ascii=ensure_ascii)
+        else:
+            os.makedirs('%s/output' % self.job_directory, exist_ok=True)
+            with open('%s/output/output.json' % self.job_directory, mode='w') as f_output:
+                json.dump(data, f_output, ensure_ascii=ensure_ascii)
+
     def get_data(self):
         """Wrapper for getting data from input dict.
 
@@ -115,13 +149,10 @@ class Worker:
         if 'api_key' in analyzer_input.get('config', {}):
             analyzer_input['config']['api_key'] = 'REMOVED'
 
-        os.makedirs('%s/output' % self.job_directory, exist_ok=True)
-        with open('%s/output/output.json' % self.job_directory, mode='w') as f_output:
-            json.dump({'success': False,
-                       'input': analyzer_input,
-                       'errorMessage': message},
-                      f_output,
-                      ensure_ascii=ensure_ascii)
+        self.__write_output({'success': False,
+                             'input': analyzer_input,
+                             'errorMessage': message},
+                            ensure_ascii=ensure_ascii)
 
         # Force exit after error
         sys.exit(1)
@@ -147,15 +178,12 @@ class Worker:
         except Exception:
             pass
 
-        report = {
+        self.__write_output({
             'success': True,
             'summary': summary,
             'artifacts': self.artifacts(full_report),
             'full': full_report
-        }
-        os.makedirs('%s/output' % self.job_directory, exist_ok=True)
-        with open('%s/output/output.json' % self.job_directory, mode='w') as f_output:
-            json.dump(report, f_output, ensure_ascii=ensure_ascii)
+        }, ensure_ascii=ensure_ascii)
 
     def run(self):
         """Overwritten by analyzers"""

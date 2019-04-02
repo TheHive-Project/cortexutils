@@ -27,7 +27,12 @@ class Analyzer(Worker):
 
         :return: Data (observable value) given through Cortex"""
         if self.data_type == 'file':
-            return self.get_param('filename', None, 'Missing filename.')  # FIXME
+            filename = self.get_param('filename', None, 'Missing filename.')
+            if self.job_directory is None:
+                path = '%s/input/%s' % (self.job_directory, filename)
+                if os.path.isfile(path):
+                    return path
+            return filename
         return self.get_param('data', None, 'Missing data field')
 
     def build_taxonomy(self, level, namespace, predicate, value):
@@ -42,11 +47,11 @@ class Analyzer(Worker):
         if level not in ['info', 'safe', 'suspicious', 'malicious']:
             level = 'info'
         return {
-                'level': level,
-                'namespace': namespace,
-                'predicate': predicate,
-                'value': value
-                }    
+            'level': level,
+            'namespace': namespace,
+            'predicate': predicate,
+            'value': value
+        }
 
     def summary(self, raw):
         """Returns a summary, needed for 'short.html' template. Overwrite it for your needs!
@@ -69,7 +74,8 @@ class Analyzer(Worker):
                 (dst, filename) = tempfile.mkstemp(dir=os.path.join(self.job_directory, "output"))
                 with open(data, 'r') as src:
                     copyfileobj(src, os.fdopen(dst, 'w'))
-                    return {**kwargs, 'dataType': data_type, 'file': ntpath.basename(filename), 'filename': ntpath.basename(data)}
+                    return {**kwargs, 'dataType': data_type, 'file': ntpath.basename(filename),
+                            'filename': ntpath.basename(data)}
         else:
             return {**kwargs, 'dataType': data_type, 'data': data}
 
