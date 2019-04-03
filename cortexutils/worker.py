@@ -1,23 +1,36 @@
 #!/usr/bin/env python
 # encoding: utf-8
+
 import os
 import sys
 import codecs
 import json
+import select
 
 
 class Worker:
+    READ_TIMEOUT = 3  # seconds
 
-    def __init__(self):
-        self.__set_encoding()
-
-        # Prepare in/out/err streams
-        self.fperror = sys.stderr
-        self.fpinput = sys.stdin
-        self.fpoutput = sys.stdout
-
+    def __init__(self, job_directory):
+        if job_directory is None:
+            if len(sys.argv) > 1:
+                job_directory = sys.argv[1]
+            else:
+                job_directory = '/job'
+        self.job_directory = job_directory
         # Load input
-        self._input = json.load(self.fpinput)
+        self._input = {}
+        if os.path.isfile('%s/input/input.json' % self.job_directory):
+            with open('%s/input/input.json' % self.job_directory) as f_input:
+                self._input = json.load(f_input)
+        else:  # If input file doesn't exist, fallback to old behavior and read input from stdin
+            self.job_directory = None
+            self.__set_encoding()
+            r, w, e = select.select([sys.stdin], [], [], self.READ_TIMEOUT)
+            if sys.stdin in r:
+                self._input = json.load(sys.stdin)
+            else:
+                self.error('Input file doesn''t exist')
 
         # Set parameters
         self.data_type = self.get_param('dataType', None, 'Missing dataType field')
@@ -98,10 +111,18 @@ class Worker:
 
         return not (self.enable_check_pap and self.pap > self.max_pap)
 
+    def __write_output(self, data, ensure_ascii=False):
+        if self.job_directory is None:
+            json.dump(data, sys.stdout, ensure_ascii=ensure_ascii)
+        else:
+            os.makedirs('%s/output' % self.job_directory, exist_ok=True)
+            with open('%s/output/output.json' % self.job_directory, mode='w') as f_output:
+                json.dump(data, f_output, ensure_ascii=ensure_ascii)
+
     def get_data(self):
         """Wrapper for getting data from input dict.
 
-        :return: Data (observable value) given through Cortex"""        
+        :return: Data (observable value) given through Cortex"""
         return self.get_param('data', None, 'Missing data field')
 
     def get_param(self, name, default=None, message=None):
@@ -128,14 +149,22 @@ class Worker:
         if 'api_key' in analyzer_input.get('config', {}):
             analyzer_input['config']['api_key'] = 'REMOVED'
 
-        json.dump({'success': False,
-                   'input': analyzer_input,
-                   'errorMessage': message},
-                  self.fpoutput,
-                  ensure_ascii=ensure_ascii)
+        self.__write_output({'success': False,
+                             'input': analyzer_input,
+                             'errorMessage': message},
+                            ensure_ascii=ensure_ascii)
 
         # Force exit after error
         sys.exit(1)
+
+    def summary(self, raw):
+        """Returns a summary, needed for 'short.html' template. Overwrite it for your needs!
+
+        :returns: by default return an empty dict"""
+        return {}
+
+    def artifacts(self, raw):
+        return []
 
     def report(self, full_report, ensure_ascii=False):
         """Returns a json dict via stdout.
@@ -149,13 +178,12 @@ class Worker:
         except Exception:
             pass
 
-        report = {
+        self.__write_output({
             'success': True,
             'summary': summary,
             'artifacts': self.artifacts(full_report),
             'full': full_report
-        }
-        json.dump(report, self.fpoutput, ensure_ascii=ensure_ascii)
+        }, ensure_ascii=ensure_ascii)
 
     def run(self):
         """Overwritten by analyzers"""
