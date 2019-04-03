@@ -8,7 +8,7 @@ import json
 import select
 
 
-class Worker:
+class Worker(object):
     READ_TIMEOUT = 3  # seconds
 
     def __init__(self, job_directory):
@@ -115,7 +115,10 @@ class Worker:
         if self.job_directory is None:
             json.dump(data, sys.stdout, ensure_ascii=ensure_ascii)
         else:
-            os.makedirs('%s/output' % self.job_directory, exist_ok=True)
+            try:
+                os.makedirs('%s/output' % self.job_directory)
+            except:
+                pass
             with open('%s/output/output.json' % self.job_directory, mode='w') as f_output:
                 json.dump(data, f_output, ensure_ascii=ensure_ascii)
 
@@ -166,24 +169,13 @@ class Worker:
     def artifacts(self, raw):
         return []
 
-    def report(self, full_report, ensure_ascii=False):
+    def report(self, output, ensure_ascii=False):
         """Returns a json dict via stdout.
 
-        :param full_report: Analyzer results as dict.
+        :param output: worker output.
         :param ensure_ascii: Force ascii output. Default: False"""
 
-        summary = {}
-        try:
-            summary = self.summary(full_report)
-        except Exception:
-            pass
-
-        self.__write_output({
-            'success': True,
-            'summary': summary,
-            'artifacts': self.artifacts(full_report),
-            'full': full_report
-        }, ensure_ascii=ensure_ascii)
+        self.__write_output(output, ensure_ascii=ensure_ascii)
 
     def run(self):
         """Overwritten by analyzers"""

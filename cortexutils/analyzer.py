@@ -79,10 +79,12 @@ class Analyzer(Worker):
                 (dst, filename) = tempfile.mkstemp(dir=os.path.join(self.job_directory, "output"))
                 with open(data, 'r') as src:
                     copyfileobj(src, os.fdopen(dst, 'w'))
-                    return {**kwargs, 'dataType': data_type, 'file': ntpath.basename(filename),
-                            'filename': ntpath.basename(data)}
+                    kwargs.update({'dataType': data_type, 'file': ntpath.basename(filename),
+                                   'filename': ntpath.basename(data)})
+                    return kwargs
         else:
-            return {**kwargs, 'dataType': data_type, 'data': data}
+            kwargs.update({'dataType': data_type, 'data': data})
+            return kwargs
 
     def report(self, full_report, ensure_ascii=False):
         """Returns a json dict via stdout.
@@ -96,15 +98,12 @@ class Analyzer(Worker):
         except Exception:
             pass
 
-        report = {
+        super(Analyzer, self).report({
             'success': True,
             'summary': summary,
             'artifacts': self.artifacts(full_report),
             'full': full_report
-        }
-        os.makedirs('%s/output' % self.job_directory, exist_ok=True)
-        with open('%s/output/output.json' % self.job_directory, mode='w') as f_output:
-            json.dump(report, f_output, ensure_ascii=ensure_ascii)
+        }, ensure_ascii)
 
     def run(self):
         """Overwritten by analyzers"""

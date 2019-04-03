@@ -51,15 +51,11 @@ class Responder(Worker):
             operation_list = self.operations(full_report)
         except Exception:
             pass
-
-        report = {
+        super(Responder, self).report({
             'success': True,
             'full': full_report,
             'operations': operation_list
-        }
-        os.makedirs('%s/output' % self.job_directory, exist_ok=True)
-        with open('%s/output/output.json' % self.job_directory, mode='w') as f_output:
-            json.dump(report, f_output, ensure_ascii=ensure_ascii)
+        }, ensure_ascii)
 
     def run(self):
         """Overwritten by responders"""
