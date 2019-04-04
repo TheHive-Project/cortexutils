@@ -164,8 +164,8 @@ class Extractor:
             dt = self.__checktype(iterable)
             if len(dt) > 0:
                 results.append({
-                    'type': dt,
-                    'value': iterable
+                    'dataType': dt,
+                    'data': iterable
                 })
         elif isinstance(iterable, list):
             for item in iterable:
@@ -175,8 +175,8 @@ class Extractor:
                     dt = self.__checktype(item)
                     if len(dt) > 0:
                         results.append({
-                            'type': dt,
-                            'value': item
+                            'dataType': dt,
+                            'data': item
                         })
         elif isinstance(iterable, dict):
             for _, item in iterable.items():
@@ -186,10 +186,22 @@ class Extractor:
                     dt = self.__checktype(item)
                     if len(dt) > 0:
                         results.append({
-                            'type': dt,
-                            'value': item
+                            'dataType': dt,
+                            'data': item
                         })
         else:
             raise TypeError('Not supported type.')
 
-        return results
+        return self.deduplicate(results)
+
+    @staticmethod
+    def deduplicate(list_of_objects):
+        dedup_list = []
+        for obj in list_of_objects:
+            present = False
+            for new_object in dedup_list:
+                if obj['dataType'] == new_object['dataType'] and obj['data'] == new_object['data']:
+                    present = True
+            if not present:
+                dedup_list.append(obj)
+        return dedup_list
