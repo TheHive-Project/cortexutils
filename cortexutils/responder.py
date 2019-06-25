@@ -2,13 +2,14 @@
 # encoding: utf-8
 
 import json
+import os
 from cortexutils.worker import Worker
 
 
 class Responder(Worker):
 
-    def __init__(self):
-        Worker.__init__(self)
+    def __init__(self, job_directory=None):
+        Worker.__init__(self, job_directory)
 
         # Not breaking compatibility
         self.artifact = self._input
@@ -50,13 +51,11 @@ class Responder(Worker):
             operation_list = self.operations(full_report)
         except Exception:
             pass
-
-        report = {
+        super(Responder, self).report({
             'success': True,
             'full': full_report,
             'operations': operation_list
-        }
-        json.dump(report, self.fpoutput, ensure_ascii=ensure_ascii)
+        }, ensure_ascii)
 
     def run(self):
         """Overwritten by responders"""

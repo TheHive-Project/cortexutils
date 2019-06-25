@@ -2,14 +2,19 @@
 # encoding: utf-8
 
 import json
-from cortexutils.worker import Worker
+import os
+
 from cortexutils.extractor import Extractor
+from cortexutils.worker import Worker
+from shutil import copyfileobj
+import tempfile
+import ntpath
 
 
 class Analyzer(Worker):
 
-    def __init__(self):
-        Worker.__init__(self)
+    def __init__(self, job_directory=None):
+        Worker.__init__(self, job_directory)
 
         # Not breaking compatibility
         self.artifact = self._input
@@ -23,7 +28,17 @@ class Analyzer(Worker):
         :return: Data (observable value) given through Cortex"""
         if self.data_type == 'file':
             return self.get_param('filename', None, 'Missing filename.')
-        return self.get_param('data', None, 'Missing data field')
+        else:
+            return self.get_param('data', None, 'Missing data field')
+
+    def get_param(self, name, default=None, message=None):
+        data = super(Analyzer, self).get_param(name, default, message)
+        if name == 'file' and self.data_type == 'file' and self.job_directory is not None:
+            path = '%s/input/%s' % (self.job_directory, data)
+            if os.path.isfile(path):
+                return path
+        else:
+            return data
 
     def build_taxonomy(self, level, namespace, predicate, value):
         """
@@ -37,11 +52,11 @@ class Analyzer(Worker):
         if level not in ['info', 'safe', 'suspicious', 'malicious']:
             level = 'info'
         return {
-                'level': level,
-                'namespace': namespace,
-                'predicate': predicate,
-                'value': value
-                }    
+            'level': level,
+            'namespace': namespace,
+            'predicate': predicate,
+            'value': value
+        }
 
     def summary(self, raw):
         """Returns a summary, needed for 'short.html' template. Overwrite it for your needs!
@@ -58,6 +73,19 @@ class Analyzer(Worker):
         # Return empty list
         return []
 
+    def build_artifact(self, data_type, data, **kwargs):
+        if data_type == 'file':
+            if os.path.isfile(data):
+                (dst, filename) = tempfile.mkstemp(dir=os.path.join(self.job_directory, "output"))
+                with open(data, 'r') as src:
+                    copyfileobj(src, os.fdopen(dst, 'w'))
+                    kwargs.update({'dataType': data_type, 'file': ntpath.basename(filename),
+                                   'filename': ntpath.basename(data)})
+                    return kwargs
+        else:
+            kwargs.update({'dataType': data_type, 'data': data})
+            return kwargs
+
     def report(self, full_report, ensure_ascii=False):
         """Returns a json dict via stdout.
 
@@ -70,13 +98,12 @@ class Analyzer(Worker):
         except Exception:
             pass
 
-        report = {
+        super(Analyzer, self).report({
             'success': True,
             'summary': summary,
             'artifacts': self.artifacts(full_report),
             'full': full_report
-        }
-        json.dump(report, self.fpoutput, ensure_ascii=ensure_ascii)
+        }, ensure_ascii)
 
     def run(self):
         """Overwritten by analyzers"""
