@@ -3,7 +3,6 @@
 This contains the unit tests for the extractor.
 """
 import unittest
-
 from cortexutils.extractor import Extractor
 
 
