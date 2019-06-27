@@ -246,32 +246,16 @@ class Extractor:
                 for dt in types:
                     for val in types[dt]:
                         results.append({
-                            'type': dt,
-                            'value': val
+                            'dataType': dt,
+                            'data': val
                         })
 
         elif isinstance(iterable, list):
             for item in iterable:
-                if isinstance(item, list) or isinstance(item, dict):
-                    results.extend(self.check_iterable(item))
-                else:
-                    dt = self.__checktype(item)
-                    if len(dt) > 0:
-                        results.append({
-                            'dataType': dt,
-                            'data': item
-                        })
+                results.extend(self.check_iterable(item))
         elif isinstance(iterable, dict):
             for _, item in iterable.items():
-                if isinstance(item, list) or isinstance(item, dict):
-                    results.extend(self.check_iterable(item))
-                else:
-                    dt = self.__checktype(item)
-                    if len(dt) > 0:
-                        results.append({
-                            'dataType': dt,
-                            'data': item
-                        })
+                results.extend(self.check_iterable(item))
         else:
             raise TypeError('Not supported type.')
 
