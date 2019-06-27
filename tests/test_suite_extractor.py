@@ -42,7 +42,7 @@ class TestExtractorValidInput(unittest.TestCase):
 
     def test_single_ipv4(self):
         self.assertEqual(
-            self.extractor.check_string(value='10.0.0.1'),
+            self.extractor.check_string(value='8.8.8.8'),
             'ip',
             'ipv4 single string: wrong data type.'
         )
@@ -101,7 +101,7 @@ class TestExtractorValidInput(unittest.TestCase):
         l_real = self.extractor.check_iterable({
             'results': [
                 {
-                    'This is an totally unimportant key': '127.0.0.1'
+                    'This is an totally unimportant key': '8.8.8.8'
                 },
                 {
                     'Totally nested!': ['https://nestedurl.verynested.com']
@@ -112,34 +112,36 @@ class TestExtractorValidInput(unittest.TestCase):
         })
         l_expected = [
             {
-                'type': 'hash',
-                'value': '7ef8b3dc5bf40268f66721a89b95f4c5f0cc08e34836f8c3a007ceed193654d4'
+                'dataType': 'hash',
+                'data': '7ef8b3dc5bf40268f66721a89b95f4c5f0cc08e34836f8c3a007ceed193654d4'
             },
             {
-                'type': 'ip',
-                'value': '127.0.0.1'
+                'dataType': 'ip',
+                'data': '8.8.8.8'
             },
             {
-                'type': 'url',
-                'value': 'https://nestedurl.verynested.com'
+                'dataType': 'url',
+                'data': 'https://nestedurl.verynested.com'
             },
             {
-                'type': 'domain',
-                'value': 'google.de'
+                'dataType': 'domain',
+                'data': 'google.de'
             },
             {
-                'type': 'domain',
-                'value': 'bing.com'
+                'dataType': 'domain',
+                'data': 'bing.com'
             },
             {
-                'type': 'fqdn',
-                'value': 'www.fqdn.de'
+                'dataType': 'fqdn',
+                'data': 'www.fqdn.de'
             }
         ]
 
         # Sorting the lists
-        l_real = sorted(l_real, key=lambda k: k['value'])
-        l_expected = sorted(l_expected, key=lambda k: k['value'])
+        l_real = sorted(l_real, key=lambda k: k['data'])
+        l_expected = sorted(l_expected, key=lambda k: k['data'])
+        print l_real
+        print l_expected
 
         self.assertEqual(
             l_real,
