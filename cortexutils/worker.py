@@ -119,8 +119,13 @@ class Worker(object):
                 os.makedirs('%s/output' % self.job_directory)
             except:
                 pass
-            with open('%s/output/output.json' % self.job_directory, mode='w') as f_output:
-                json.dump(data, f_output, ensure_ascii=ensure_ascii)
+
+            f_output = open('%s/output/output.json' % self.job_directory, mode='w')
+
+            if not ensure_ascii:
+                f_output = codecs.getwriter('utf-8')(f_output, 'strict')
+
+            json.dump(data, f_output, ensure_ascii=ensure_ascii)
 
     def get_data(self):
         """Wrapper for getting data from input dict.
