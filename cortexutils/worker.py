@@ -26,8 +26,7 @@ class Worker(object):
         else:  # If input file doesn't exist, fallback to old behavior and read input from stdin
             self.job_directory = None
             self.__set_encoding()
-            r, w, e = select.select([sys.stdin], [], [], self.READ_TIMEOUT)
-            if sys.stdin in r:
+            if not sys.stdin.isatty():
                 self._input = json.load(sys.stdin)
             else:
                 self.error('Input file doesn''t exist')
