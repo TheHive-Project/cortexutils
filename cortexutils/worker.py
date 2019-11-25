@@ -122,10 +122,14 @@ class Worker(object):
 
             f_output = open('%s/output/output.json' % self.job_directory, mode='w')
 
-            if not ensure_ascii:
-                f_output = codecs.getwriter('utf-8')(f_output, 'strict')
+            try:
+                json.dump(data, f_output, ensure_ascii=ensure_ascii)
+            except UnicodeEncodeError:
+                f_output.seek(0)
+                f_writer = codecs.getwriter('utf-8')(f_output, 'strict')
+                json.dump(data, f_writer, ensure_ascii=ensure_ascii)
 
-            json.dump(data, f_output, ensure_ascii=ensure_ascii)
+            f_output.close()
 
     def get_data(self):
         """Wrapper for getting data from input dict.
