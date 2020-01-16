@@ -176,7 +176,7 @@ class Extractor:
         """
         self.found_observables = []
         if isinstance(value, (str, unicode)):
-            self.regexpack = self.ftregex + self.asregex
+            self.regexpack = self.ftregex
             for r in self.regexpack:
                 self.hits = re.findall(r.get('regex'), value)
                 if len(self.hits) > 0:
