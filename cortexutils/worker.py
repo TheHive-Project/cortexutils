@@ -151,6 +151,10 @@ class Worker(object):
             analyzer_input['config']['apikey'] = 'REMOVED'
         if 'api_key' in analyzer_input.get('config', {}):
             analyzer_input['config']['api_key'] = 'REMOVED'
+        if 'apisecret' in analyzer_input.get('config', {}):
+            analyzer_input['config']['apisecret'] = 'REMOVED'
+        if 'api_secret' in analyzer_input.get('config', {}):
+            analyzer_input['config']['api_secret'] = 'REMOVED'
 
         self.__write_output({'success': False,
                              'input': analyzer_input,

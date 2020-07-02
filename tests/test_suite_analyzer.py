@@ -107,6 +107,8 @@ class TestErrorResponse(unittest.TestCase):
         self.assertEqual(self.analyzer.get_param('config.key'), "secret")
         self.assertEqual(self.analyzer.get_param('config.apikey'), "secret")
         self.assertEqual(self.analyzer.get_param('config.api_key'), "secret")
+        self.assertEqual(self.analyzer.get_param('config.apisecret'), "secret")
+        self.assertEqual(self.analyzer.get_param('config.api_secret'), "secret")
 
         # Run the error method
         with self.assertRaises(SystemExit):
@@ -124,6 +126,8 @@ class TestErrorResponse(unittest.TestCase):
         self.assertEqual(json_output['input']['config']['key'], 'REMOVED')
         self.assertEqual(json_output['input']['config']['apikey'], 'REMOVED')
         self.assertEqual(json_output['input']['config']['api_key'], 'REMOVED')
+        self.assertEqual(json_output['input']['config']['apisecret'], 'REMOVED')
+        self.assertEqual(json_output['input']['config']['api_secret'], 'REMOVED')
 
 
 class TestReportResponse(unittest.TestCase):
