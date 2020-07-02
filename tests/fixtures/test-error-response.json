@@ -5,7 +5,7 @@
         "password": "secret",
         "key": "secret",
         "apikey": "secret",
-        "api_key": "secret"
+        "api_key": "secret",
         "apisecret": "secret",
         "api_secret": "secret"
     }
