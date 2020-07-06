@@ -7,6 +7,7 @@
         "apikey": "secret",
         "api_key": "secret",
         "apisecret": "secret",
-        "api_secret": "secret"
+        "api_secret": "secret",
+        "secret": "secret"
     }
 }
