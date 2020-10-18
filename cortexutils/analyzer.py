@@ -73,17 +73,18 @@ class Analyzer(Worker):
         # Return empty list
         return []
 
-    def build_artifact(self, data_type, data, **kwargs):
+    def build_artifact(self, data_type, data, *args, **kwargs):
+        message = kwargs.get('message', None)
         if data_type == 'file':
             if os.path.isfile(data):
                 (dst, filename) = tempfile.mkstemp(dir=os.path.join(self.job_directory, "output"))
                 with open(data, 'r') as src:
                     copyfileobj(src, os.fdopen(dst, 'w'))
                     kwargs.update({'dataType': data_type, 'file': ntpath.basename(filename),
-                                   'filename': ntpath.basename(data)})
+                                   'filename': ntpath.basename(data), 'message': message})
                     return kwargs
         else:
-            kwargs.update({'dataType': data_type, 'data': data})
+            kwargs.update({'dataType': data_type, 'data': data, 'message': message })
             return kwargs
 
     def report(self, full_report, ensure_ascii=False):
