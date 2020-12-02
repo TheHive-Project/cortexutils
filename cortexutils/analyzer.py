@@ -77,8 +77,8 @@ class Analyzer(Worker):
         if data_type == 'file':
             if os.path.isfile(data):
                 (dst, filename) = tempfile.mkstemp(dir=os.path.join(self.job_directory, "output"))
-                with open(data, 'r') as src:
-                    copyfileobj(src, os.fdopen(dst, 'w'))
+                with open(data, 'rb') as src:
+                    copyfileobj(src, os.fdopen(dst, 'wb'))
                     kwargs.update({'dataType': data_type, 'file': ntpath.basename(filename),
                                    'filename': ntpath.basename(data)})
                     return kwargs
