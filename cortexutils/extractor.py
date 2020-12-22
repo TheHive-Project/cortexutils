@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 from builtins import str as unicode
+import ipaddress
+import tld
 
 import re
 
@@ -25,8 +27,24 @@ class Extractor:
         self.ignore = ignore
         self.regex = self.__init_regex()
 
-    @staticmethod
-    def __init_regex():
+    def __valid_ip(self, value):
+        try:
+            if not ipaddress.ip_address(unicode(value)).is_global:
+                return None
+        except:
+            return None
+        return value
+
+    def __valid_domain(self, value):
+        return tld.get_fld(value, fix_protocol=True, fail_silently=True)
+
+    def __valid_fqdn(self, value):
+        parts = tld.get_tld(value, fix_protocol=True, fail_silently=True, as_object=True)
+        if parts and len(parts.subdomain) > 1:
+            return parts.parsed_url.netloc
+        return None
+
+    def __init_regex(self):
         """
         Returns compiled regex list.
 
@@ -35,9 +53,15 @@ class Extractor:
         """
 
         # IPv4
+        ft_r = '(?:' + \
+               '(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.)' + \
+               '{3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?' + \
+                ')'
         regex = [{
             'type': 'ip',
-            'regex': re.compile(r'[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}')
+            'regex': re.compile(r'[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}'),
+            'ft_regex': re.compile(r'{}'.format(ft_r)),
+            'validator': self.__valid_ip
         }]
 
         # IPv6
@@ -66,21 +90,30 @@ class Extractor:
         })
 
         # URL
+        ft_r = '(' + \
+               '(?:(?:meows?|h[Xxt]{2}ps?)://)?(?:(?:(?:[a-zA-Z0-9\-]+\[?\.\]?)+[a-z]{2,8})' + \
+               '|(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\[?\.\]?){3}(?:25[0-5]|2[0-4][0-9]' + \
+               '|[01]?[0-9][0-9]?))/[^\s\<"]+' + \
+                ')'
         regex.append({
             'type': 'url',
-            'regex': re.compile(r'^(http://|https://)')
+            'regex': re.compile(r'^(http://|https://)'),
+            'ft_regex': re.compile(r'{}'.format(ft_r))
         })
 
         # domain
         regex.append({
             'type': 'domain',
-            'regex': re.compile(r'^(?!http://|https://)^[\w\-]+\.[a-zA-Z]+$')
+            'regex': re.compile(r'^(?!http://|https://)^[\w\-]+\.[a-zA-Z]+$'),
+            'ft_regex': re.compile(r'[\s\>\</\"\']((?:[a-zA-Z0-9\-]+\.)+[a-z]{2,8})'),
+            'validator': self.__valid_domain
         })
 
         # hash
         regex.append({
             'type': 'hash',
-            'regex': re.compile(r'^([0-9a-fA-F]{32}|[0-9a-fA-F]{40}|[0-9a-fA-F]{64})$')
+            'regex': re.compile(r'^([0-9a-fA-F]{32}|[0-9a-fA-F]{40}|[0-9a-fA-F]{64})$'),
+            'ft_regex': re.compile(r'([0-9a-fA-F]{32}|[0-9a-fA-F]{40}|[0-9a-fA-F]{64})[\s\>\</\"\']')
         })
 
         # user-agent
@@ -106,13 +139,16 @@ class Extractor:
         # mail
         regex.append({
             'type': 'mail',
-            'regex': re.compile(r'[\w.\-]+@\w+\.[\w.]+')
+            'regex': re.compile(r'[\w.\-]+@\w+\.[\w.]+'),
+            'ft_regex': re.compile(r'([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)')
         })
 
         # fqdn
         regex.append({
             'type': 'fqdn',
-            'regex': re.compile(r'^(?!http://|https://)^[\w\-.]+\.[\w\-]+\.[a-zA-Z]+$')
+            'regex': re.compile(r'^(?!http://|https://)^[\w\-.]+\.[\w\-]+\.[a-zA-Z]+$'),
+            'ft_regex': re.compile(r'(?:^|[^a-zA-Z0-9\-@])((?:[a-zA-Z0-9\-]+\.)+[a-z]{2,8})(?:[^a-z]|$)'),
+            'validator': self.__valid_fqdn
         })
 
         return regex
@@ -134,8 +170,33 @@ class Extractor:
         if isinstance(value, (str, unicode)):
             for r in self.regex:
                 if r.get('regex').match(value):
+                    if r.get('validator') and not r['validator'](value):
+                        return ''
                     return r.get('type')
         return ''
+
+    def __check_extraction(self, value):
+        """Checks if the value matches extractions
+        :param value: The value to check
+        :type value: str or number
+        :return: Dict of results {type: [list of extracted values], type: [list of extracted values]}
+        :rtype: dict
+        """
+        observables = {}
+        if isinstance(value, (str, unicode)):
+            for r in self.regex:
+                ioc_type = r.get('type')
+                rex = r.get('ft_regex')
+                if not ioc_type or not rex:
+                    continue
+                for observable in re.findall(rex, value):
+                    observable = r.get('validator', lambda a: a)(observable)
+                    if not observable:
+                        continue
+                    if ioc_type not in observables:
+                        observables[ioc_type] = []
+                    observables[ioc_type].append(observable)
+        return observables
 
     def check_string(self, value):
         """
@@ -147,6 +208,17 @@ class Extractor:
         :rtype: str
         """
         return self.__checktype(value)
+
+    def extract_matches(self, value):
+        """
+        Extracts all ioc's using extraction regex.
+
+        :param value: String to check
+        :type value: str
+        :return: Dict of results {type: [list of extracted values], type: [list of extracted values]}
+        :rtype: dict
+        """
+        return self.__check_extraction(value)
 
     def check_iterable(self, iterable):
         """
@@ -167,28 +239,22 @@ class Extractor:
                     'dataType': dt,
                     'data': iterable
                 })
+            else:
+                #no hits of string matching do we'll parse with full text
+                types = self.__check_extraction(iterable)
+                for dt in types:
+                    for val in types[dt]:
+                        results.append({
+                            'dataType': dt,
+                            'data': val
+                        })
+
         elif isinstance(iterable, list):
             for item in iterable:
-                if isinstance(item, list) or isinstance(item, dict):
-                    results.extend(self.check_iterable(item))
-                else:
-                    dt = self.__checktype(item)
-                    if len(dt) > 0:
-                        results.append({
-                            'dataType': dt,
-                            'data': item
-                        })
+                results.extend(self.check_iterable(item))
         elif isinstance(iterable, dict):
             for _, item in iterable.items():
-                if isinstance(item, list) or isinstance(item, dict):
-                    results.extend(self.check_iterable(item))
-                else:
-                    dt = self.__checktype(item)
-                    if len(dt) > 0:
-                        results.append({
-                            'dataType': dt,
-                            'data': item
-                        })
+                results.extend(self.check_iterable(item))
         else:
             raise TypeError('Not supported type.')
 

@@ -3,7 +3,6 @@
 This contains the unit tests for the extractor.
 """
 import unittest
-
 from cortexutils.extractor import Extractor
 
 
@@ -43,7 +42,7 @@ class TestExtractorValidInput(unittest.TestCase):
 
     def test_single_ipv4(self):
         self.assertEqual(
-            self.extractor.check_string(value='10.0.0.1'),
+            self.extractor.check_string(value='8.8.8.8'),
             'ip',
             'ipv4 single string: wrong data type.'
         )
@@ -98,11 +97,65 @@ class TestExtractorValidInput(unittest.TestCase):
             'registry single string: wrong data type.'
         )
 
+    def test_text_ip(self):
+        text = 'This is a string with an IP 8.8.8.8 embedded'
+        self.assertEqual(
+            self.extractor.extract_matches(value=text),
+            {
+                'ip': ['8.8.8.8']
+            },
+            'ip in text: failed.'
+        )
+
+    def test_text_url(self):
+        text = 'This is a string with a url http://www.somebaddomain.com/badness/bad embedded'
+        self.assertEqual(
+            self.extractor.extract_matches(value=text),
+            {
+                'url': ['http://www.somebaddomain.com/badness/bad'],
+                'domain': [u'somebaddomain.com'],
+                'fqdn': [u'www.somebaddomain.com']
+            },
+            'url in text: failed.'
+        )
+
+    def test_text_hash(self):
+        text = '''b373bd6b144e7846f45a1e47eed380b7 This is a string with an hashes b373bd6b144e7846f45a1e47ced380b8 and
+        7ef8b3dc5bf40268f66721a89b95f4c5f0cc08e34836f8c3a007ceed193654d4  embedded
+        '''
+        self.assertEqual(
+            self.extractor.extract_matches(value=text),
+            {
+                'hash': [
+                    'b373bd6b144e7846f45a1e47eed380b7',
+                    'b373bd6b144e7846f45a1e47ced380b8',
+                    '7ef8b3dc5bf40268f66721a89b95f4c5f0cc08e34836f8c3a007ceed193654d4'
+                ]
+            },
+            'hash in text: failed.'
+        )
+
+    def test_text_email(self):
+        text = 'This is a string with a url myemail@gmail.com and joe.smith@somecorp.org embedded'
+        self.assertEqual(
+            self.extractor.extract_matches(value=text),
+            {
+                'mail': [
+                    'myemail@gmail.com',
+                    'joe.smith@somecorp.org'
+                ]
+            },
+            'email in text: failed.'
+        )
+
     def test_iterable(self):
         l_real = self.extractor.check_iterable({
             'results': [
                 {
-                    'This is an totally unimportant key': '127.0.0.1'
+                    'This is an totally unimportant key': '8.8.8.8'
+                },
+                {
+                    'This is an IP in text': 'This is a really bad IP 8.8.8.9 serving malware'
                 },
                 {
                     'Totally nested!': ['https://nestedurl.verynested.com']
@@ -113,34 +166,38 @@ class TestExtractorValidInput(unittest.TestCase):
         })
         l_expected = [
             {
-                'type': 'hash',
-                'value': '7ef8b3dc5bf40268f66721a89b95f4c5f0cc08e34836f8c3a007ceed193654d4'
+                'dataType': 'hash',
+                'data': '7ef8b3dc5bf40268f66721a89b95f4c5f0cc08e34836f8c3a007ceed193654d4'
             },
             {
-                'type': 'ip',
-                'value': '127.0.0.1'
+                'dataType': 'ip',
+                'data': '8.8.8.8'
             },
             {
-                'type': 'url',
-                'value': 'https://nestedurl.verynested.com'
+                'dataType': 'ip',
+                'data': '8.8.8.9'
             },
             {
-                'type': 'domain',
-                'value': 'google.de'
+                'dataType': 'url',
+                'data': 'https://nestedurl.verynested.com'
             },
             {
-                'type': 'domain',
-                'value': 'bing.com'
+                'dataType': 'domain',
+                'data': 'google.de'
             },
             {
-                'type': 'fqdn',
-                'value': 'www.fqdn.de'
+                'dataType': 'domain',
+                'data': 'bing.com'
+            },
+            {
+                'dataType': 'fqdn',
+                'data': 'www.fqdn.de'
             }
         ]
 
         # Sorting the lists
-        l_real = sorted(l_real, key=lambda k: k['value'])
-        l_expected = sorted(l_expected, key=lambda k: k['value'])
+        l_real = sorted(l_real, key=lambda k: k['data'])
+        l_expected = sorted(l_expected, key=lambda k: k['data'])
 
         self.assertEqual(
             l_real,
