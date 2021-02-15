@@ -3,6 +3,7 @@
 
 import json
 import os
+import stat
 
 from cortexutils.extractor import Extractor
 from cortexutils.worker import Worker
@@ -76,12 +77,16 @@ class Analyzer(Worker):
     def build_artifact(self, data_type, data, **kwargs):
         if data_type == 'file':
             if os.path.isfile(data):
-                (dst, filename) = tempfile.mkstemp(dir=os.path.join(self.job_directory, "output"))
+                dst = tempfile.NamedTemporaryFile(
+                    dir=os.path.join(self.job_directory, "output"), delete=False)
                 with open(data, 'rb') as src:
-                    copyfileobj(src, os.fdopen(dst, 'wb'))
-                    kwargs.update({'dataType': data_type, 'file': ntpath.basename(filename),
-                                   'filename': ntpath.basename(data)})
-                    return kwargs
+                    copyfileobj(src, dst)
+                dstfname = dst.name
+                dst.close()
+                os.chmod(dstfname, 0o444)
+                kwargs.update({'dataType': data_type, 'file': os.path.basename(dst.name),
+                                   'filename': os.path.basename(data)})
+                return kwargs
         else:
             kwargs.update({'dataType': data_type, 'data': data})
             return kwargs
