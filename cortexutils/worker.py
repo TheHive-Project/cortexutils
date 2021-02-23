@@ -142,15 +142,16 @@ class Worker(object):
         :param message: Error message
         :param ensure_ascii: Force ascii output. Default: False"""
 
+        # Get analyzer input
         analyzer_input = self._input
-        if 'password' in analyzer_input.get('config', {}):
-            analyzer_input['config']['password'] = 'REMOVED'
-        if 'key' in analyzer_input.get('config', {}):
-            analyzer_input['config']['key'] = 'REMOVED'
-        if 'apikey' in analyzer_input.get('config', {}):
-            analyzer_input['config']['apikey'] = 'REMOVED'
-        if 'api_key' in analyzer_input.get('config', {}):
-            analyzer_input['config']['api_key'] = 'REMOVED'
+
+        # Define sensitive key values
+        secrets = ['password', 'key', 'secret']
+
+        # Loop over all the sensitive config names and clean them
+        for config_key, v in analyzer_input.get('config', {}).items():
+            if any(secret in config_key.lower() for secret in secrets):
+                analyzer_input.get('config', {})[config_key] = 'REMOVED'
 
         self.__write_output({'success': False,
                              'input': analyzer_input,
