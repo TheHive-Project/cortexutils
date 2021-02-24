@@ -75,7 +75,7 @@ class TestTlpConfig(unittest.TestCase):
 
         # Using the _Analyzer__check_tlp notation to access managed method
         # __check_tlp
-        self.assertEqual(self.analyzer._Analyzer__check_tlp(), True)
+        self.assertEqual(self.analyzer._Worker__check_tlp(), True)
 
     def test_check_tlp_ko(self):
         self.analyzer.enable_check_tlp = True
@@ -84,7 +84,7 @@ class TestTlpConfig(unittest.TestCase):
 
         # Using the _Analyzer__check_tlp notation to access managed method
         # __check_tlp
-        self.assertEqual(self.analyzer._Analyzer__check_tlp(), False)
+        self.assertEqual(self.analyzer._Worker__check_tlp(), False)
 
     def test_check_tlp_ok(self):
         self.analyzer.enable_check_tlp = True
@@ -93,7 +93,7 @@ class TestTlpConfig(unittest.TestCase):
 
         # Using the _Analyzer__check_tlp notation to access managed method
         # __check_tlp
-        self.assertEqual(self.analyzer._Analyzer__check_tlp(), True)
+        self.assertEqual(self.analyzer._Worker__check_tlp(), True)
 
 
 class TestErrorResponse(unittest.TestCase):
@@ -113,7 +113,7 @@ class TestErrorResponse(unittest.TestCase):
             self.analyzer.error('Error', True)
 
         # Get the output
-        output = self.analyzer.fpoutput.getvalue().strip()
+        output = sys.stdout.getvalue().strip()
         json_output = json.loads(output)
 
         self.assertEqual(json_output['success'], False)
@@ -137,7 +137,7 @@ class TestReportResponse(unittest.TestCase):
         self.analyzer.report({'report_id': '12345'})
 
         # Get the output
-        output = self.analyzer.fpoutput.getvalue().strip()
+        output = sys.stdout.getvalue().strip()
         json_output = json.loads(output)
 
         self.assertEqual(json_output.get('success'), True)

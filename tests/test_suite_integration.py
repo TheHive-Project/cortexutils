@@ -27,13 +27,13 @@ class AnalyzerExtractorOutputTest(unittest.TestCase):
         self.analyzer.report({'result': '1.2.3.4'})
 
         # Grab the output
-        output = self.analyzer.fpoutput.getvalue().strip()
+        output = sys.stdout.getvalue().strip()
         json_output = json.loads(output)
 
         # Checks
         self.assertNotIn(self.analyzer.get_data(), output)
-        self.assertEqual(json_output['artifacts'][0]['value'], '1.2.3.4')
-        self.assertEqual(json_output['artifacts'][0]['type'], 'ip')
+        self.assertEqual(json_output['artifacts'][0]['data'], '1.2.3.4')
+        self.assertEqual(json_output['artifacts'][0]['dataType'], 'ip')
 
 class AnalyzerExtractorNoResultTest(unittest.TestCase):
     def setUp(self):
@@ -51,7 +51,7 @@ class AnalyzerExtractorNoResultTest(unittest.TestCase):
         })
 
         # Grab the output
-        output = self.analyzer.fpoutput.getvalue().strip()
+        output = sys.stdout.getvalue().strip()
         json_output = json.loads(output)
 
         # Check for empty artifact list
