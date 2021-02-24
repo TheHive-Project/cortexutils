@@ -5,6 +5,10 @@
         "password": "secret",
         "key": "secret",
         "apikey": "secret",
-        "api_key": "secret"
+        "api_key": "secret",
+        "apiSecret": "secret",
+        "api_Pass": "secret",
+        "API": "secret"
+        
     }
 }
