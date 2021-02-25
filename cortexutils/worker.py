@@ -26,8 +26,7 @@ class Worker(object):
         else:  # If input file doesn't exist, fallback to old behavior and read input from stdin
             self.job_directory = None
             self.__set_encoding()
-            r, w, e = select.select([sys.stdin], [], [], self.READ_TIMEOUT)
-            if sys.stdin in r:
+            if not sys.stdin.isatty():
                 self._input = json.load(sys.stdin)
             else:
                 self.error('Input file doesn''t exist')
@@ -142,15 +141,16 @@ class Worker(object):
         :param message: Error message
         :param ensure_ascii: Force ascii output. Default: False"""
 
+        # Get analyzer input
         analyzer_input = self._input
-        if 'password' in analyzer_input.get('config', {}):
-            analyzer_input['config']['password'] = 'REMOVED'
-        if 'key' in analyzer_input.get('config', {}):
-            analyzer_input['config']['key'] = 'REMOVED'
-        if 'apikey' in analyzer_input.get('config', {}):
-            analyzer_input['config']['apikey'] = 'REMOVED'
-        if 'api_key' in analyzer_input.get('config', {}):
-            analyzer_input['config']['api_key'] = 'REMOVED'
+
+        # Define sensitive key values
+        secrets = ['password', 'key', 'secret']
+
+        # Loop over all the sensitive config names and clean them
+        for config_key, v in analyzer_input.get('config', {}).items():
+            if any(secret in config_key.lower() for secret in secrets):
+                analyzer_input.get('config', {})[config_key] = 'REMOVED'
 
         self.__write_output({'success': False,
                              'input': analyzer_input,
