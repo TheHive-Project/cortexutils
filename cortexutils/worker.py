@@ -6,6 +6,7 @@ import sys
 import codecs
 import json
 import select
+import traceback
 
 
 class Worker(object):
@@ -180,3 +181,25 @@ class Worker(object):
     def run(self):
         """Overwritten by analyzers"""
         pass
+
+    def __getattribute__(self, name):
+        """Used to wrap .run() method with exception handling
+
+        :param name: attribute name.
+        :return attribute value. Wraps .run() method."""
+
+        attr = super(Worker, self).__getattribute__(name)
+        if name != 'run':
+            return attr
+
+        def run():
+            try:
+                attr()
+            except SystemExit as e: # pass on SystemExit
+                raise e
+            except Warning: # pass Warning as empty result
+                self.report({})
+            except: # format exceptions for display in Cortex
+                self.error(traceback.format_exc())
+
+        return run
