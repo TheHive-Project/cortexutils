@@ -8,8 +8,8 @@ from cortexutils.worker import Worker
 
 class Responder(Worker):
 
-    def __init__(self, job_directory=None):
-        Worker.__init__(self, job_directory)
+    def __init__(self, job_directory=None, secret_phrases=None):
+        Worker.__init__(self, job_directory, secret_phrases)
 
         # Not breaking compatibility
         self.artifact = self._input
