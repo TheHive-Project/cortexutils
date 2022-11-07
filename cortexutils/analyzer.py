@@ -14,8 +14,8 @@ import ntpath
 
 class Analyzer(Worker):
 
-    def __init__(self, job_directory=None, secret_phrases=None):
-        Worker.__init__(self, job_directory, secret_phrases)
+    def __init__(self, job_directory=None):
+        Worker.__init__(self, job_directory)
 
         # Not breaking compatibility
         self.artifact = self._input

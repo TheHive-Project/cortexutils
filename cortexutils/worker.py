@@ -1,28 +1,23 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
+import os
+import sys
 import codecs
 import json
-import os
 import select
-import sys
 
-DEFAULT_SECRET_PHRASES = ("key", "password", "secret")
 
 class Worker(object):
     READ_TIMEOUT = 3  # seconds
 
-    def __init__(self, job_directory, secret_phrases):
+    def __init__(self, job_directory):
         if job_directory is None:
             if len(sys.argv) > 1:
                 job_directory = sys.argv[1]
             else:
                 job_directory = '/job'
         self.job_directory = job_directory
-        if secret_phrases is None:
-            self.secret_phrases = DEFAULT_SECRET_PHRASES
-        else:
-            self.secret_phrases = secret_phrases
         # Load input
         self._input = {}
         if os.path.isfile('%s/input/input.json' % self.job_directory):
@@ -149,13 +144,13 @@ class Worker(object):
         # Get analyzer input
         analyzer_input = self._input
 
+        # Define sensitive key values
+        secrets = ['password', 'key', 'secret']
+
         # Loop over all the sensitive config names and clean them
-        for config_key in analyzer_input.get('config', {}).keys():
-            if any(
-                secret_phrase in config_key.lower() 
-                for secret_phrase in self.secret_phrases
-            ):
-                analyzer_input['config'][config_key] = 'REMOVED'
+        for config_key, v in analyzer_input.get('config', {}).items():
+            if any(secret in config_key.lower() for secret in secrets):
+                analyzer_input.get('config', {})[config_key] = 'REMOVED'
 
         self.__write_output({'success': False,
                              'input': analyzer_input,
