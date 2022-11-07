@@ -14,8 +14,8 @@ import ntpath
 
 class Analyzer(Worker):
 
-    def __init__(self, job_directory=None):
-        Worker.__init__(self, job_directory)
+    def __init__(self, job_directory=None, secret_phrases=None):
+        Worker.__init__(self, job_directory, secret_phrases)
 
         # Not breaking compatibility
         self.artifact = self._input
@@ -102,11 +102,16 @@ class Analyzer(Worker):
             summary = self.summary(full_report)
         except Exception:
             pass
-
+        operation_list = []
+        try:
+            operation_list = self.operations(full_report)
+        except Exception:
+            pass
         super(Analyzer, self).report({
             'success': True,
             'summary': summary,
             'artifacts': self.artifacts(full_report),
+            'operations': operation_list,
             'full': full_report
         }, ensure_ascii)
 

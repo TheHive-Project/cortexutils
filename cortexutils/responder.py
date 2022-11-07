@@ -8,8 +8,8 @@ from cortexutils.worker import Worker
 
 class Responder(Worker):
 
-    def __init__(self, job_directory=None):
-        Worker.__init__(self, job_directory)
+    def __init__(self, job_directory=None, secret_phrases=None):
+        Worker.__init__(self, job_directory, secret_phrases)
 
         # Not breaking compatibility
         self.artifact = self._input
@@ -19,26 +19,6 @@ class Responder(Worker):
 
         :return: Data (observable value) given through Cortex"""
         return self.get_param('data', None, 'Missing data field')
-
-    @staticmethod
-    def build_operation(op_type, **parameters):
-        """
-        :param op_type: an operation type as a string
-        :param parameters: a dict including the operation's params
-        :return: dict
-        """
-        operation = {
-            'type': op_type
-        }
-        operation.update(parameters)
-
-        return operation
-
-    def operations(self, raw):
-        """Returns the list of operations to be executed after the job completes
-
-        :returns: by default return an empty array"""
-        return []
 
     def report(self, full_report, ensure_ascii=False):
         """Returns a json dict via stdout.
