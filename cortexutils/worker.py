@@ -127,6 +127,26 @@ class Worker(object):
         :return: Data (observable value) given through Cortex"""
         return self.get_param('data', None, 'Missing data field')
 
+    @staticmethod
+    def build_operation(op_type, **parameters):
+        """
+        :param op_type: an operation type as a string
+        :param parameters: a dict including the operation's params
+        :return: dict
+        """
+        operation = {
+            'type': op_type
+        }
+        operation.update(parameters)
+
+        return operation
+
+    def operations(self, raw):
+        """Returns the list of operations to be executed after the job completes
+
+        :returns: by default return an empty array"""
+        return []
+
     def get_param(self, name, default=None, message=None):
         """Just a wrapper for Analyzer.__get_param.
         :param name: Name of the parameter to get. JSON-like syntax, e.g. `config.username`

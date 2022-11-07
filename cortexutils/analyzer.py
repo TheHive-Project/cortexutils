@@ -102,11 +102,16 @@ class Analyzer(Worker):
             summary = self.summary(full_report)
         except Exception:
             pass
-
+        operation_list = []
+        try:
+            operation_list = self.operations(full_report)
+        except Exception:
+            pass
         super(Analyzer, self).report({
             'success': True,
             'summary': summary,
             'artifacts': self.artifacts(full_report),
+            'operations': operation_list,
             'full': full_report
         }, ensure_ascii)
 
