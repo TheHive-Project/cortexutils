@@ -123,8 +123,17 @@ class Worker(object):
                 os.makedirs('%s/output' % self.job_directory)
             except:
                 pass
-            with open('%s/output/output.json' % self.job_directory, mode='w') as f_output:
+
+            f_output = open('%s/output/output.json' % self.job_directory, mode='w')
+
+            try:
                 json.dump(data, f_output, ensure_ascii=ensure_ascii)
+            except UnicodeEncodeError:
+                f_output.seek(0)
+                f_writer = codecs.getwriter('utf-8')(f_output, 'strict')
+                json.dump(data, f_writer, ensure_ascii=ensure_ascii)
+
+            f_output.close()
 
     def get_data(self):
         """Wrapper for getting data from input dict.
