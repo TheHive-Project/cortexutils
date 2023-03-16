@@ -53,6 +53,11 @@ class Worker(object):
 
         self.__set_proxies()
 
+        # Set CA certificate configuration if available
+        self.cacerts = self.get_param('config.cacerts')
+
+        self.__set_cacerts()
+
         # Finally run check tlp
         if not (self.__check_tlp()):
             self.error('TLP is higher than allowed.')
@@ -65,6 +70,10 @@ class Worker(object):
             os.environ['http_proxy'] = self.http_proxy
         if self.https_proxy is not None:
             os.environ['https_proxy'] = self.https_proxy
+
+    def __set_cacerts(self):
+        if self.cacerts is not None:
+            os.environ['REQUESTS_CA_BUNDLE'] = self.cacerts
 
     @staticmethod
     def __set_encoding():
