@@ -167,6 +167,19 @@ class Worker(object):
 
         return self.__get_param(self._input, name, default, message)
 
+    def get_env(self, key, default=None, message=None):
+        """Wrapper for getting configuration values from the environment.
+        :param key: Key of the environment variable to get.
+        :param default: Default value, if not found. Default: None
+        :param message: Error message. If given and key not found, exit with error. Default: None"""
+
+        if key in os.environ:
+            return os.environ[key]
+        else:
+            if message is not None:
+                self.error(message)
+            return default
+
     def error(self, message, ensure_ascii=False):
         """Stop analyzer with an error message.
 
