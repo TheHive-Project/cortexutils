@@ -1,15 +1,12 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-import json
 import os
-import stat
+import tempfile
+from shutil import copyfileobj
 
 from cortexutils.extractor import Extractor
 from cortexutils.worker import Worker
-from shutil import copyfileobj
-import tempfile
-import ntpath
 
 
 class Analyzer(Worker):
@@ -21,21 +18,27 @@ class Analyzer(Worker):
         self.artifact = self._input
 
         # Check for auto extraction config
-        self.auto_extract = self.get_param('config.auto_extract', self.get_param('config.auto_extract_artifacts', True))
+        self.auto_extract = self.get_param(
+            "config.auto_extract", self.get_param("config.auto_extract_artifacts", True)
+        )
 
     def get_data(self):
         """Wrapper for getting data from input dict.
 
         :return: Data (observable value) given through Cortex"""
-        if self.data_type == 'file':
-            return self.get_param('filename', None, 'Missing filename.')
+        if self.data_type == "file":
+            return self.get_param("filename", None, "Missing filename.")
         else:
-            return self.get_param('data', None, 'Missing data field')
+            return self.get_param("data", None, "Missing data field")
 
     def get_param(self, name, default=None, message=None):
         data = super(Analyzer, self).get_param(name, default, message)
-        if name == 'file' and self.data_type == 'file' and self.job_directory is not None:
-            path = '%s/input/%s' % (self.job_directory, data)
+        if (
+            name == "file"
+            and self.data_type == "file"
+            and self.job_directory is not None
+        ):
+            path = "%s/input/%s" % (self.job_directory, data)
             if os.path.isfile(path):
                 return path
         else:
@@ -50,17 +53,19 @@ class Analyzer(Worker):
         :return: dict
         """
         # Set info level if something not expected is set
-        if level not in ['info', 'safe', 'suspicious', 'malicious']:
-            level = 'info'
+        if level not in ["info", "safe", "suspicious", "malicious"]:
+            level = "info"
         return {
-            'level': level,
-            'namespace': namespace,
-            'predicate': predicate,
-            'value': value
+            "level": level,
+            "namespace": namespace,
+            "predicate": predicate,
+            "value": value,
         }
 
     def summary(self, raw):
-        """Returns a summary, needed for 'short.html' template. Overwrite it for your needs!
+        """Returns a summary, needed for 'short.html' template.
+
+        Overwrite it for your needs!
 
         :returns: by default return an empty dict"""
         return {}
@@ -75,20 +80,26 @@ class Analyzer(Worker):
         return []
 
     def build_artifact(self, data_type, data, **kwargs):
-        if data_type == 'file':
+        if data_type == "file":
             if os.path.isfile(data):
                 dst = tempfile.NamedTemporaryFile(
-                    dir=os.path.join(self.job_directory, "output"), delete=False)
-                with open(data, 'rb') as src:
+                    dir=os.path.join(self.job_directory, "output"), delete=False
+                )
+                with open(data, "rb") as src:
                     copyfileobj(src, dst)
                 dstfname = dst.name
                 dst.close()
                 os.chmod(dstfname, 0o444)
-                kwargs.update({'dataType': data_type, 'file': os.path.basename(dst.name),
-                                   'filename': os.path.basename(data)})
+                kwargs.update(
+                    {
+                        "dataType": data_type,
+                        "file": os.path.basename(dst.name),
+                        "filename": os.path.basename(data),
+                    }
+                )
                 return kwargs
         else:
-            kwargs.update({'dataType': data_type, 'data': data})
+            kwargs.update({"dataType": data_type, "data": data})
             return kwargs
 
     def report(self, full_report, ensure_ascii=False):
@@ -101,19 +112,22 @@ class Analyzer(Worker):
         try:
             summary = self.summary(full_report)
         except Exception:
-            pass
+            pass  # nosec B110
         operation_list = []
         try:
             operation_list = self.operations(full_report)
         except Exception:
-            pass
-        super(Analyzer, self).report({
-            'success': True,
-            'summary': summary,
-            'artifacts': self.artifacts(full_report),
-            'operations': operation_list,
-            'full': full_report
-        }, ensure_ascii)
+            pass  # nosec B110
+        super(Analyzer, self).report(
+            {
+                "success": True,
+                "summary": summary,
+                "artifacts": self.artifacts(full_report),
+                "operations": operation_list,
+                "full": full_report,
+            },
+            ensure_ascii,
+        )
 
     def run(self):
         """Overwritten by analyzers"""
@@ -121,20 +135,26 @@ class Analyzer(Worker):
 
     # Not breaking compatibility
     def notSupported(self):
-        self.error('This datatype is not supported by this analyzer.')
+        self.error("This datatype is not supported by this analyzer.")
 
     # Not breaking compatibility
     def unexpectedError(self, e):
-        self.error('Unexpected Error: ' + str(e))
+        self.error("Unexpected Error: " + str(e))
 
     # Not breaking compatibility
     def getData(self):
-        """For not breaking compatibility to cortexutils.analyzer, this wraps get_data()"""
+        """Wrapper of get_data.
+
+        For not breaking compatibility to cortexutils.analyzer.
+        """
         return self.get_data()
 
     # Not breaking compatibility
     def getParam(self, name, default=None, message=None):
-        """For not breaking compatibility to cortexutils.analyzer, this wraps get_param()"""
+        """Wrapper for get_param.
+
+        For not breaking compatibility to cortexutils.analyzer.
+        """
         return self.get_param(name=name, default=default, message=message)
 
     # Not breaking compatibility

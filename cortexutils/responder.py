@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-import json
-import os
 from cortexutils.worker import Worker
 
 
@@ -18,7 +16,7 @@ class Responder(Worker):
         """Wrapper for getting data from input dict.
 
         :return: Data (observable value) given through Cortex"""
-        return self.get_param('data', None, 'Missing data field')
+        return self.get_param("data", None, "Missing data field")
 
     def report(self, full_report, ensure_ascii=False):
         """Returns a json dict via stdout.
@@ -30,12 +28,11 @@ class Responder(Worker):
         try:
             operation_list = self.operations(full_report)
         except Exception:
-            pass
-        super(Responder, self).report({
-            'success': True,
-            'full': full_report,
-            'operations': operation_list
-        }, ensure_ascii)
+            pass  # nosec B110
+        super(Responder, self).report(
+            {"success": True, "full": full_report, "operations": operation_list},
+            ensure_ascii,
+        )
 
     def run(self):
         """Overwritten by responders"""
