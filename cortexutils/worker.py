@@ -171,7 +171,9 @@ class Worker(object):
         """Wrapper for getting configuration values from the environment.
         :param key: Key of the environment variable to get.
         :param default: Default value, if not found. Default: None
-        :param message: Error message. If given and key not found, exit with error. Default: None"""
+        :param message: Error message. If given and key not found, exit with error.
+                        Default: None
+        """
 
         if key in os.environ:
             return os.environ[key]
