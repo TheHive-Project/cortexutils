@@ -18,7 +18,7 @@ else:
 
 def load_test_fixture(fixture_path):
     path = os.path.dirname(os.path.abspath(__file__))
-    fixture_file = open(path + '/' + fixture_path)
+    fixture_file = open(path + "/" + fixture_path)
     input = fixture_file.read()
     fixture_file.close()
     sys.stdin = StringIO(input)
@@ -28,11 +28,11 @@ def load_test_fixture(fixture_path):
 class TestMinimalConfig(unittest.TestCase):
 
     def setUp(self):
-        load_test_fixture('fixtures/test-minimal-config.json')
+        load_test_fixture("fixtures/test-minimal-config.json")
         self.analyzer = Analyzer()
 
     def test_default_config(self):
-        self.assertEqual(self.analyzer.data_type, 'ip')
+        self.assertEqual(self.analyzer.data_type, "ip")
         self.assertEqual(self.analyzer.tlp, 2)
         self.assertEqual(self.analyzer.enable_check_tlp, False)
         self.assertEqual(self.analyzer.max_tlp, 2)
@@ -44,30 +44,30 @@ class TestMinimalConfig(unittest.TestCase):
         self.assertEqual(self.analyzer.get_data(), "1.1.1.1")
 
     def test_params_data(self):
-        self.assertEqual(self.analyzer.getParam('data'), "1.1.1.1")
-        self.assertEqual(self.analyzer.get_param('data'), "1.1.1.1")
+        self.assertEqual(self.analyzer.getParam("data"), "1.1.1.1")
+        self.assertEqual(self.analyzer.get_param("data"), "1.1.1.1")
 
 
 class TestProxyConfig(unittest.TestCase):
 
     def setUp(self):
-        load_test_fixture('fixtures/test-proxy-config.json')
+        load_test_fixture("fixtures/test-proxy-config.json")
         self.analyzer = Analyzer()
 
     def test_proxy_config(self):
-        proxy_url = 'http://local.proxy:8080'
+        proxy_url = "http://local.proxy:8080"
 
         self.assertEqual(self.analyzer.http_proxy, proxy_url)
         self.assertEqual(self.analyzer.https_proxy, proxy_url)
 
-        self.assertEqual(os.environ['http_proxy'], proxy_url)
-        self.assertEqual(os.environ['https_proxy'], proxy_url)
+        self.assertEqual(os.environ["http_proxy"], proxy_url)
+        self.assertEqual(os.environ["https_proxy"], proxy_url)
 
 
 class TestTlpConfig(unittest.TestCase):
 
     def setUp(self):
-        load_test_fixture('fixtures/test-tlp-config.json')
+        load_test_fixture("fixtures/test-tlp-config.json")
         self.analyzer = Analyzer()
 
     def test_check_tlp_disabled(self):
@@ -99,59 +99,57 @@ class TestTlpConfig(unittest.TestCase):
 class TestErrorResponse(unittest.TestCase):
 
     def setUp(self):
-        load_test_fixture('fixtures/test-error-response.json')
+        load_test_fixture("fixtures/test-error-response.json")
         self.analyzer = Analyzer()
 
     def test_error_response(self):
-        self.assertEqual(self.analyzer.get_param('config.password'), "secret")
-        self.assertEqual(self.analyzer.get_param('config.key'), "secret")
-        self.assertEqual(self.analyzer.get_param('config.apikey'), "secret")
-        self.assertEqual(self.analyzer.get_param('config.api_key'), "secret")
-        self.assertEqual(self.analyzer.get_param('config.apiSecret'), "secret")
-        self.assertEqual(self.analyzer.get_param('config.api_Pass'), "secret")
-        self.assertEqual(self.analyzer.get_param('config.API'), "secret")
-
+        self.assertEqual(self.analyzer.get_param("config.password"), "secret")
+        self.assertEqual(self.analyzer.get_param("config.key"), "secret")
+        self.assertEqual(self.analyzer.get_param("config.apikey"), "secret")
+        self.assertEqual(self.analyzer.get_param("config.api_key"), "secret")
+        self.assertEqual(self.analyzer.get_param("config.apiSecret"), "secret")
+        self.assertEqual(self.analyzer.get_param("config.api_Pass"), "secret")
+        self.assertEqual(self.analyzer.get_param("config.API"), "secret")
 
         # Run the error method
         with self.assertRaises(SystemExit):
-            self.analyzer.error('Error', True)
+            self.analyzer.error("Error", True)
 
         # Get the output
         output = sys.stdout.getvalue().strip()
         json_output = json.loads(output)
 
-        self.assertEqual(json_output['success'], False)
-        self.assertEqual(json_output['errorMessage'], 'Error')
-        self.assertEqual(json_output['input']['dataType'], 'ip')
-        self.assertEqual(json_output['input']['data'], '1.1.1.1')
-        self.assertEqual(json_output['input']['config']['password'], 'REMOVED')
-        self.assertEqual(json_output['input']['config']['key'], 'REMOVED')
-        self.assertEqual(json_output['input']['config']['apikey'], 'REMOVED')
-        self.assertEqual(json_output['input']['config']['api_key'], 'REMOVED')
-        self.assertEqual(json_output['input']['config']['apiSecret'], 'REMOVED')
-        self.assertEqual(json_output['input']['config']['api_Pass'], 'secret')
-        self.assertEqual(json_output['input']['config']['API'], 'secret')
-        
+        self.assertEqual(json_output["success"], False)
+        self.assertEqual(json_output["errorMessage"], "Error")
+        self.assertEqual(json_output["input"]["dataType"], "ip")
+        self.assertEqual(json_output["input"]["data"], "1.1.1.1")
+        self.assertEqual(json_output["input"]["config"]["password"], "REMOVED")
+        self.assertEqual(json_output["input"]["config"]["key"], "REMOVED")
+        self.assertEqual(json_output["input"]["config"]["apikey"], "REMOVED")
+        self.assertEqual(json_output["input"]["config"]["api_key"], "REMOVED")
+        self.assertEqual(json_output["input"]["config"]["apiSecret"], "REMOVED")
+        self.assertEqual(json_output["input"]["config"]["api_Pass"], "secret")
+        self.assertEqual(json_output["input"]["config"]["API"], "secret")
 
 
 class TestReportResponse(unittest.TestCase):
 
     def setUp(self):
-        load_test_fixture('fixtures/test-report-response.json')
+        load_test_fixture("fixtures/test-report-response.json")
         self.analyzer = Analyzer()
 
     def test_report_response(self):
         # Run the analyzer report method
-        self.analyzer.report({'report_id': '12345'})
+        self.analyzer.report({"report_id": "12345"})
 
         # Get the output
         output = sys.stdout.getvalue().strip()
         json_output = json.loads(output)
 
-        self.assertEqual(json_output.get('success'), True)
-        self.assertEqual(json_output.get('errorMessage', None), None)
-        self.assertEqual(json_output['full']['report_id'], '12345')        
+        self.assertEqual(json_output.get("success"), True)
+        self.assertEqual(json_output.get("errorMessage", None), None)
+        self.assertEqual(json_output["full"]["report_id"], "12345")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

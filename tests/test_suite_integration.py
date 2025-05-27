@@ -15,16 +15,13 @@ else:
 
 class AnalyzerExtractorOutputTest(unittest.TestCase):
     def setUp(self):
-        sys.stdin = StringIO(json.dumps({
-            "data": "8.8.8.8",
-            "dataType": "ip"
-        }))
+        sys.stdin = StringIO(json.dumps({"data": "8.8.8.8", "dataType": "ip"}))
         sys.stdout = StringIO()
         self.analyzer = Analyzer()
 
     def test_output(self):
         # Run the report method
-        self.analyzer.report({'result': '1.2.3.4'})
+        self.analyzer.report({"result": "1.2.3.4"})
 
         # Grab the output
         output = sys.stdout.getvalue().strip()
@@ -32,27 +29,23 @@ class AnalyzerExtractorOutputTest(unittest.TestCase):
 
         # Checks
         self.assertNotIn(self.analyzer.get_data(), output)
-        self.assertEqual(json_output['artifacts'][0]['data'], '1.2.3.4')
-        self.assertEqual(json_output['artifacts'][0]['dataType'], 'ip')
+        self.assertEqual(json_output["artifacts"][0]["data"], "1.2.3.4")
+        self.assertEqual(json_output["artifacts"][0]["dataType"], "ip")
+
 
 class AnalyzerExtractorNoResultTest(unittest.TestCase):
     def setUp(self):
-        sys.stdin = StringIO(json.dumps({
-            "data": "8.8.8.8",
-            "dataType": "ip"
-        }))
+        sys.stdin = StringIO(json.dumps({"data": "8.8.8.8", "dataType": "ip"}))
         sys.stdout = StringIO()
         self.analyzer = Analyzer()
 
     def test_output(self):
         # Run report method
-        self.analyzer.report({
-            'message': '8.8.8.8 was not found in database.'
-        })
+        self.analyzer.report({"message": "8.8.8.8 was not found in database."})
 
         # Grab the output
         output = sys.stdout.getvalue().strip()
         json_output = json.loads(output)
 
         # Check for empty artifact list
-        self.assertEqual(json_output['artifacts'], [], 'Artifact list should be empty.')
+        self.assertEqual(json_output["artifacts"], [], "Artifact list should be empty.")
