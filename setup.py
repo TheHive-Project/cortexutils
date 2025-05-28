@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="cortexutils",
-    version="2.2.0",
+    version="2.2.1",
     description=(
         "A Python library for including utility classes for "
         "Cortex analyzers and responders"
