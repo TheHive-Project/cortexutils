@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cortexutils"
+version = "2.3.0"
+description = "A Python library for including utility classes for Cortex analyzers and responders"
+readme = "README"
+requires-python = ">=3.10"
+dependencies = []
+license = "AGPL-3.0-or-later"
+keywords = ["cortex", "analyzer", "responder", "thehive"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Security",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+authors = [{ name = "TheHive-Project", email = "support@thehive-project.org" }]
+
+[project.urls]
+Homepage = "https://github.com/TheHive-Project/cortexutils"
+
+[project.optional-dependencies]
+audit = ["bandit", "pip-audit"]
+build = ["build", "twine"]
+lint = ["mypy", "ruff", "pre-commit"]
+test = ["pytest", "pytest-cov"]
+dev = ["cortexutils[audit, lint, test, build]", "nox"]
+
+[tool.setuptools.packages.find]
+include = ["cortexutils*"]
+
+[tool.coverage.run]
+omit = ["tests/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

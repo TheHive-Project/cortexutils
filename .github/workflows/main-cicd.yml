@@ -11,8 +11,12 @@ jobs:
     uses: ./.github/workflows/_static-checks.yml
   unit-tests:
     uses: ./.github/workflows/_unit-tests.yml
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
   build-package:
     uses: ./.github/workflows/_build-package.yml
+  check-release-notes:
+    uses: ./.github/workflows/_check-release-notes.yml
   upload-package:
     if: startsWith(github.ref, 'refs/tags/') 
     uses: ./.github/workflows/_upload-package.yml
