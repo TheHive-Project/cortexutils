@@ -5,7 +5,6 @@ from cortexutils.worker import Worker
 
 
 class Responder(Worker):
-
     def __init__(self, job_directory=None, secret_phrases=None):
         Worker.__init__(self, job_directory, secret_phrases)
 
@@ -21,7 +20,7 @@ class Responder(Worker):
     def report(self, full_report, ensure_ascii=False):
         """Returns a json dict via stdout.
 
-        :param full_report: Responsder results as dict.
+        :param full_report: Responder results as dict.
         :param ensure_ascii: Force ascii output. Default: False"""
 
         operation_list = []

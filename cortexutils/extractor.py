@@ -11,7 +11,7 @@ class Extractor:
     """The extractor class tries to detect ioc attribute types using regex-matching.
 
     Two functions are provided:
-      - ``check_string(str)`` which checks a string for a regex matc
+      - ``check_string(str)`` which checks a string for a regex match
         and just returns the type
       - ``check_iterable(itr)`` that iterates over a list or a dictionary
         and returns a list of {type, value} dicts
