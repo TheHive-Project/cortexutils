@@ -11,8 +11,6 @@ jobs:
     uses: ./.github/workflows/_static-checks.yml
   unit-tests:
     uses: ./.github/workflows/_unit-tests.yml
-    secrets:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
   build-package:
     uses: ./.github/workflows/_build-package.yml
   upload-package:
