@@ -10,7 +10,6 @@ from cortexutils.worker import Worker
 
 
 class Analyzer(Worker):
-
     def __init__(self, job_directory=None, secret_phrases=None):
         Worker.__init__(self, job_directory, secret_phrases)
 

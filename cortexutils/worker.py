@@ -36,7 +36,7 @@ class Worker(object):
             if not sys.stdin.isatty():
                 self._input = json.load(sys.stdin)
             else:
-                self.error("Input file doesn" "t exist")
+                self.error("Input file doesn't exist")
 
         # Set parameters
         self.data_type = self.get_param("dataType", None, "Missing dataType field")
@@ -185,7 +185,7 @@ class Worker(object):
     def error(self, message, ensure_ascii=False):
         """Stop analyzer with an error message.
 
-        Changing ensure_ascii can be helpful when stucking with ascii <-> utf-8 issues.
+        Changing ensure_ascii can be helpful when stuck with ascii <-> utf-8 issues.
         Additionally, the input as returned, too.
         Maybe helpful when dealing with errors.
 

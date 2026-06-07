@@ -26,7 +26,6 @@ def load_test_fixture(fixture_path):
 
 
 class TestMinimalConfig(unittest.TestCase):
-
     def setUp(self):
         load_test_fixture("fixtures/test-minimal-config.json")
         self.analyzer = Analyzer()
@@ -49,7 +48,6 @@ class TestMinimalConfig(unittest.TestCase):
 
 
 class TestProxyConfig(unittest.TestCase):
-
     def setUp(self):
         load_test_fixture("fixtures/test-proxy-config.json")
         self.analyzer = Analyzer()
@@ -65,7 +63,6 @@ class TestProxyConfig(unittest.TestCase):
 
 
 class TestTlpConfig(unittest.TestCase):
-
     def setUp(self):
         load_test_fixture("fixtures/test-tlp-config.json")
         self.analyzer = Analyzer()
@@ -97,7 +94,6 @@ class TestTlpConfig(unittest.TestCase):
 
 
 class TestErrorResponse(unittest.TestCase):
-
     def setUp(self):
         load_test_fixture("fixtures/test-error-response.json")
         self.analyzer = Analyzer()
@@ -133,7 +129,6 @@ class TestErrorResponse(unittest.TestCase):
 
 
 class TestReportResponse(unittest.TestCase):
-
     def setUp(self):
         load_test_fixture("fixtures/test-report-response.json")
         self.analyzer = Analyzer()
