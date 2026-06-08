@@ -25,7 +25,7 @@ class TestExtractorValidInput(unittest.TestCase):
 
     def test_single_fqdn_as_unicode(self):
         self.assertEqual(
-            self.extractor.check_string(value="www.google.de"),
+            self.extractor.check_string(value="www.m\u00fcnchen.de"),
             "fqdn",
             "FQDN single string: wrong data type.",
         )
