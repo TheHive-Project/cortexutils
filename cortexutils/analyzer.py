@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# encoding: utf-8
 
 import os
 import tempfile
@@ -11,7 +10,7 @@ from cortexutils.worker import Worker
 
 class Analyzer(Worker):
     def __init__(self, job_directory=None, secret_phrases=None):
-        Worker.__init__(self, job_directory, secret_phrases)
+        super().__init__(job_directory, secret_phrases)
 
         # Not breaking compatibility
         self.artifact = self._input
@@ -31,13 +30,13 @@ class Analyzer(Worker):
             return self.get_param("data", None, "Missing data field")
 
     def get_param(self, name, default=None, message=None):
-        data = super(Analyzer, self).get_param(name, default, message)
+        data = super().get_param(name, default, message)
         if (
             name == "file"
             and self.data_type == "file"
             and self.job_directory is not None
         ):
-            path = "%s/input/%s" % (self.job_directory, data)
+            path = f"{self.job_directory}/input/{data}"
             if os.path.isfile(path):
                 return path
         else:
@@ -117,7 +116,7 @@ class Analyzer(Worker):
             operation_list = self.operations(full_report)
         except Exception:
             pass  # nosec B110
-        super(Analyzer, self).report(
+        super().report(
             {
                 "success": True,
                 "summary": summary,

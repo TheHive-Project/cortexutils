@@ -1,12 +1,10 @@
 #!/usr/bin/env python
-# encoding: utf-8
-
 from cortexutils.worker import Worker
 
 
 class Responder(Worker):
     def __init__(self, job_directory=None, secret_phrases=None):
-        Worker.__init__(self, job_directory, secret_phrases)
+        super().__init__(job_directory, secret_phrases)
 
         # Not breaking compatibility
         self.artifact = self._input
@@ -28,7 +26,7 @@ class Responder(Worker):
             operation_list = self.operations(full_report)
         except Exception:
             pass  # nosec B110
-        super(Responder, self).report(
+        super().report(
             {"success": True, "full": full_report, "operations": operation_list},
             ensure_ascii,
         )

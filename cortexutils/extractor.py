@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import re
-from builtins import str as unicode
 
 
 class ExtractionError(Exception):
@@ -67,7 +66,7 @@ class Extractor:
             + "(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])"
             + ")"
         )
-        regex.append({"type": "ip", "regex": re.compile(r"{}".format(r))})
+        regex.append({"type": "ip", "regex": re.compile(r)})
 
         # URL
         regex.append({"type": "url", "regex": re.compile(r"^(http://|https://)")})
@@ -95,7 +94,7 @@ class Extractor:
             {
                 "type": "user-agent",
                 "regex": re.compile(
-                    r"^(Mozilla/[45]\.0 |AppleWebKit/[0-9]{3}\.[0-9]{2} |Chrome/[0-9]{2}\.[0-9]\."  # noqa
+                    r"^(Mozilla/[45]\.0 |AppleWebKit/[0-9]{3}\.[0-9]{2} |Chrome/[0-9]{2}\.[0-9]\."  # noqa: E501
                     r"[0-9]{4}\.[0-9]{3} |Safari/[0-9]{3}\.[0-9]{2} ).*?$"
                 ),
             }
@@ -115,7 +114,7 @@ class Extractor:
                 "type": "registry",
                 "regex": re.compile(
                     r"^(HKEY|HKLM|HKCU|HKCR|HKCC)"
-                    r"(_LOCAL_MACHINE|_CURRENT_USER|_CURRENT_CONFIG|_CLASSES_ROOT|)[\\a-zA-Z0-9]+$"  # noqa
+                    r"(_LOCAL_MACHINE|_CURRENT_USER|_CURRENT_CONFIG|_CLASSES_ROOT|)[\\a-zA-Z0-9]+$"  # noqa: E501
                 ),
             }
         )
@@ -149,7 +148,7 @@ class Extractor:
             if self.ignore == value:
                 return ""
 
-        if isinstance(value, (str, unicode)):
+        if isinstance(value, str):
             for r in self.regex:
                 if r.get("regex").match(value):
                     return r.get("type")
@@ -179,7 +178,7 @@ class Extractor:
         """
         results = []
         # Only the string left
-        if isinstance(iterable, (str, unicode)):
+        if isinstance(iterable, str):
             dt = self.__checktype(iterable)
             if len(dt) > 0:
                 results.append({"dataType": dt, "data": iterable})

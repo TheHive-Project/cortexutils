@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-# encoding: utf-8
-
 import codecs
 import json
 import os
@@ -9,7 +7,7 @@ import sys
 DEFAULT_SECRET_PHRASES = ("key", "password", "secret")
 
 
-class Worker(object):
+class Worker:
     READ_TIMEOUT = 3  # seconds
 
     def __init__(self, job_directory, secret_phrases):
@@ -25,8 +23,9 @@ class Worker(object):
             self.secret_phrases = secret_phrases
         # Load input
         self._input = {}
-        if os.path.isfile("%s/input/input.json" % self.job_directory):
-            with open("%s/input/input.json" % self.job_directory) as f_input:
+        input_path = f"{self.job_directory}/input/input.json"
+        if os.path.isfile(input_path):
+            with open(input_path) as f_input:
                 self._input = json.load(f_input)
         else:
             # If input file doesn't exist,
@@ -72,15 +71,9 @@ class Worker(object):
     def __set_encoding():
         try:
             if sys.stdout.encoding != "UTF-8":
-                if sys.version_info[0] == 3:
-                    sys.stdout = codecs.getwriter("utf-8")(sys.stdout.buffer, "strict")
-                else:
-                    sys.stdout = codecs.getwriter("utf-8")(sys.stdout, "strict")
+                sys.stdout = codecs.getwriter("utf-8")(sys.stdout.buffer, "strict")
             if sys.stderr.encoding != "UTF-8":
-                if sys.version_info[0] == 3:
-                    sys.stderr = codecs.getwriter("utf-8")(sys.stderr.buffer, "strict")
-                else:
-                    sys.stderr = codecs.getwriter("utf-8")(sys.stderr, "strict")
+                sys.stderr = codecs.getwriter("utf-8")(sys.stderr.buffer, "strict")
         except Exception:
             pass  # nosec B110
 
@@ -123,13 +116,9 @@ class Worker(object):
         if self.job_directory is None:
             json.dump(data, sys.stdout, ensure_ascii=ensure_ascii)
         else:
-            try:
-                os.makedirs("%s/output" % self.job_directory)
-            except Exception:
-                pass  # nosec B110
-            with open(
-                "%s/output/output.json" % self.job_directory, mode="w"
-            ) as f_output:
+            output_path = f"{self.job_directory}/output"
+            os.makedirs(output_path, exist_ok=True)
+            with open(f"{output_path}/output.json", mode="w") as f_output:
                 json.dump(data, f_output, ensure_ascii=ensure_ascii)
 
     def get_data(self):

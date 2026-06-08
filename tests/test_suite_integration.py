@@ -1,16 +1,11 @@
 #!/usr/bin/env python
-# coding: utf-8
 import json
 import unittest
 import sys
 
 from cortexutils.analyzer import Analyzer
 
-# Different lib when using python3 or 2
-if sys.version_info >= (3, 0):
-    from io import StringIO
-else:
-    from StringIO import StringIO
+from io import StringIO
 
 
 class AnalyzerExtractorOutputTest(unittest.TestCase):

@@ -1,26 +1,19 @@
 #!/usr/bin/env python
-# coding: utf-8
 
 import os
 import sys
 import json
 import unittest
 
-from io import open
 from cortexutils.analyzer import Analyzer
 
-# Different lib when using python3 or 2
-if sys.version_info >= (3, 0):
-    from io import StringIO
-else:
-    from StringIO import StringIO
+from io import StringIO
 
 
 def load_test_fixture(fixture_path):
     path = os.path.dirname(os.path.abspath(__file__))
-    fixture_file = open(path + "/" + fixture_path)
-    input = fixture_file.read()
-    fixture_file.close()
+    with open(path + "/" + fixture_path) as fixture_file:
+        input = fixture_file.read()
     sys.stdin = StringIO(input)
     sys.stdout = StringIO()
 
