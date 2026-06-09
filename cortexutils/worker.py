@@ -17,7 +17,7 @@ class Worker:
             if len(sys.argv) > 1:
                 job_directory = sys.argv[1]
             else:
-                job_directory = "/job"
+                job_directory = os.path.join(job_directory, "job")
         self.job_directory = job_directory
         if secret_phrases is None:
             self.secret_phrases = DEFAULT_SECRET_PHRASES
@@ -25,7 +25,7 @@ class Worker:
             self.secret_phrases = secret_phrases
         # Load input
         self._input = {}
-        input_path = f"{self.job_directory}/input/input.json"
+        input_path = os.path.join(self.job_directory, "input", "input.json")
         if os.path.isfile(input_path):
             with open(input_path) as f_input:
                 self._input = json.load(f_input)
@@ -118,9 +118,10 @@ class Worker:
         if self.job_directory is None:
             json.dump(data, sys.stdout, ensure_ascii=ensure_ascii)
         else:
-            output_path = f"{self.job_directory}/output"
-            os.makedirs(output_path, exist_ok=True)
-            with open(f"{output_path}/output.json", mode="w") as f_output:
+            output_dir = os.path.join(self.job_directory, "output")
+            os.makedirs(output_dir, exist_ok=True)
+            output_path = os.path.join(output_dir, "output.json")
+            with open(output_path, mode="w") as f_output:
                 json.dump(data, f_output, ensure_ascii=ensure_ascii)
 
     def get_data(self):

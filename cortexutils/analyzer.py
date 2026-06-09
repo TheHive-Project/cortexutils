@@ -37,9 +37,9 @@ class Analyzer(Worker):
             and self.data_type == "file"
             and self.job_directory is not None
         ):
-            path = f"{self.job_directory}/input/{data}"
-            if os.path.isfile(path):
-                return path
+            input_path = os.path.join(self.job_directory, "input", data)
+            if os.path.isfile(input_path):
+                return input_path
         else:
             return data
 
