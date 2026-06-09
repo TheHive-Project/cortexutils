@@ -17,7 +17,7 @@ class Worker:
             if len(sys.argv) > 1:
                 job_directory = sys.argv[1]
             else:
-                job_directory = os.path.join(job_directory, "job")
+                job_directory = "/job"
         self.job_directory = job_directory
         if secret_phrases is None:
             self.secret_phrases = DEFAULT_SECRET_PHRASES
