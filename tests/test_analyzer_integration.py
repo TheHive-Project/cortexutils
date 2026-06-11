@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Protocol, Type, TypeVar
 
 import pytest
 
@@ -196,3 +196,52 @@ def test_analyzer_error_for_invalid_input(
         "input": file_input_without_filename,
         "errorMessage": "Missing filename.",
     }
+
+
+# Experimental test analyzer factory
+
+T = TypeVar("T", bound=Analyzer)
+
+
+class TestAnalyzerFactory(Protocol):
+    __test__ = False  # ignore for pytest
+
+    def __call__(self, analyzer_cls: Type[T] = Analyzer) -> T: ...
+
+
+@pytest.fixture
+def get_test_analyzer(job_directory: Path) -> TestAnalyzerFactory:
+
+    def _get_analyzer(analyzer_cls: Type[T] = Analyzer) -> T:
+        return analyzer_cls(job_directory)
+
+    return _get_analyzer
+
+
+def test_fancy_analyzer_test_factory(get_test_analyzer, load_job_output):
+    analyzer = get_test_analyzer()
+
+    analyzer.report({})
+
+    assert type(analyzer) is Analyzer
+
+    output = load_job_output()
+    assert output == DEFAULT_OUTPUT
+
+
+def test_fancy_custom_analyzer_test_factory(get_test_analyzer, load_job_output):
+    class TestAnalyzer(Analyzer):
+        def report(self, full_report, ensure_ascii=False):
+            return super().report(full_report, ensure_ascii)
+
+        def something_custom(self):
+            return "..."
+
+    custom_analyzer = get_test_analyzer(TestAnalyzer)
+
+    custom_analyzer.report({})
+
+    assert type(custom_analyzer) is TestAnalyzer
+
+    output = load_job_output()
+    assert output == DEFAULT_OUTPUT
