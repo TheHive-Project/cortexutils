@@ -1,7 +1,6 @@
 import json
-import tempfile
-from contextlib import contextmanager
 from pathlib import Path
+from typing import Callable
 
 import pytest
 
@@ -21,52 +20,62 @@ DEFAULT_OUTPUT = {
 }
 
 
-@contextmanager
-def init_job_directory(input_obj: dict | None = None):
-    """Context manager that yields a temporary job directory path, then cleans up."""
-    temp_dir = tempfile.TemporaryDirectory()
-    job_dir = Path(temp_dir.name)
+@pytest.fixture(scope="function")
+def job_directory(tmp_path: Path) -> Path:
+    """Fixture to initialize the actual test job's directory."""
 
-    try:
-        input_dir = job_dir / "input"
-        input_dir.mkdir()
+    job_dir = tmp_path
 
-        if input_obj is None:
-            input_obj = DEFAULT_INPUT
+    input_dir = job_dir / "input"
+    input_dir.mkdir()
 
-        with open(input_dir / "input.json", "w") as f:
+    with open(input_dir / "input.json", "w") as f:
+        json.dump(DEFAULT_INPUT, f)
+
+    output_dir = job_dir / "output"
+    output_dir.mkdir()
+
+    print(job_dir)
+    return job_dir
+
+
+@pytest.fixture
+def add_job_input(job_directory: Path) -> Callable[[dict], None]:
+    """Factory fixture to specify a custom input.json for the actual test job."""
+
+    def _add_job_input(input_obj: dict):
+
+        with open(job_directory / "input" / "input.json", "w") as f:
+            print(f.name)
             json.dump(input_obj, f)
 
-        output_dir = job_dir / "output"
-        output_dir.mkdir()
-
-        yield job_dir
-
-    finally:
-        temp_dir.cleanup()
+    return _add_job_input
 
 
-def load_output(job_directory: Path) -> dict:
-    with open(job_directory / "output" / "output.json") as output_file:
-        output = json.load(output_file)
-        return output
+@pytest.fixture
+def load_job_output(job_directory: Path) -> Callable[[], dict]:
+    """Factory fixture to load the actual test job's output.json."""
+
+    def _load_job_output() -> dict:
+        with open(job_directory / "output" / "output.json") as output_file:
+            output = json.load(output_file)
+            return output
+
+    return _load_job_output
 
 
-def test_simple_analyzer_success():
-    with init_job_directory() as job_directory:
-        Analyzer(job_directory).report({})
-        output = load_output(job_directory)
+def test_simple_analyzer_success(job_directory, load_job_output):
+    Analyzer(job_directory).report({})
+    output = load_job_output()
     assert output == DEFAULT_OUTPUT
 
 
-def test_simple_analyzer_error():
-
+def test_simple_analyzer_error(job_directory, load_job_output):
     error_msg = "test analyzer error"
-    with init_job_directory() as job_directory:
-        with pytest.raises(SystemExit):
-            Analyzer(job_directory).error(error_msg)
-        output = load_output(job_directory)
+    with pytest.raises(SystemExit):
+        Analyzer(job_directory).error(error_msg)
 
+    output = load_job_output()
     assert output == {
         "success": False,
         "input": DEFAULT_INPUT,
@@ -74,7 +83,7 @@ def test_simple_analyzer_error():
     }
 
 
-def test_analyzer_report_with_summary_and_taxonomies():
+def test_analyzer_report_with_summary_and_taxonomies(job_directory, load_job_output):
     class TestAnalyzer(Analyzer):
         def summary(self, raw):
             taxonomies = []
@@ -89,10 +98,9 @@ def test_analyzer_report_with_summary_and_taxonomies():
                 )
             return {"taxonomies": taxonomies, "raw": raw}
 
-    with init_job_directory() as job_directory:
-        full_report = {}
-        TestAnalyzer(job_directory).report(full_report)
-        output = load_output(job_directory)
+    full_report = {}
+    TestAnalyzer(job_directory).report(full_report)
+    output = load_job_output()
 
     assert output == {
         **DEFAULT_OUTPUT,
@@ -111,14 +119,13 @@ def test_analyzer_report_with_summary_and_taxonomies():
     }
 
 
-def test_analyzer_report_with_operations():
+def test_analyzer_report_with_operations(job_directory, load_job_output):
     class TestAnalyzer(Analyzer):
         def operations(self, raw):
             return [self.build_operation(op_type="DummyOperation", dummy="parameter")]
 
-    with init_job_directory() as job_directory:
-        TestAnalyzer(job_directory).report({})
-        output = load_output(job_directory)
+    TestAnalyzer(job_directory).report({})
+    output = load_job_output()
 
     assert output == {
         **DEFAULT_OUTPUT,
@@ -126,7 +133,7 @@ def test_analyzer_report_with_operations():
     }
 
 
-def test_analyzer_report_with_extractable_artifacts():
+def test_analyzer_report_with_extractable_artifacts(job_directory, load_job_output):
     string_ip_artifact = "11.22.33.44"
     list_ip_artifacts = ["10.20.30.40", "20.30.40.50"]
     dict_item_ip_artifact = "100.100.100.100"
@@ -137,9 +144,8 @@ def test_analyzer_report_with_extractable_artifacts():
         "dict-with-ip": {"just-an-ip": dict_item_ip_artifact},
     }
 
-    with init_job_directory() as job_directory:
-        Analyzer(job_directory).report(report)
-        output = load_output(job_directory)
+    Analyzer(job_directory).report(report)
+    output = load_job_output()
 
     assert output == {
         **DEFAULT_OUTPUT,
@@ -151,13 +157,15 @@ def test_analyzer_report_with_extractable_artifacts():
     }
 
 
-def test_analyzer_error_for_invalid_input():
+def test_analyzer_error_for_invalid_input(
+    job_directory, add_job_input, load_job_output
+):
 
     empty_input = {}
-    with init_job_directory(empty_input) as job_directory:
-        with pytest.raises(SystemExit):
-            Analyzer(job_directory)
-        output = load_output(job_directory)
+    add_job_input(empty_input)
+    with pytest.raises(SystemExit):
+        Analyzer(job_directory)
+    output = load_job_output()
 
     assert output == {
         "success": False,
@@ -166,10 +174,10 @@ def test_analyzer_error_for_invalid_input():
     }
 
     generic_input_without_data = {"dataType": "ip"}
-    with init_job_directory(generic_input_without_data) as job_directory:
-        with pytest.raises(SystemExit):
-            Analyzer(job_directory).report({})
-        output = load_output(job_directory)
+    add_job_input(generic_input_without_data)
+    with pytest.raises(SystemExit):
+        Analyzer(job_directory).report({})
+    output = load_job_output()
 
     assert output == {
         "success": False,
@@ -178,10 +186,10 @@ def test_analyzer_error_for_invalid_input():
     }
 
     file_input_without_filename = {"dataType": "file"}
-    with init_job_directory(file_input_without_filename) as job_directory:
-        with pytest.raises(SystemExit):
-            Analyzer(job_directory).report({})
-        output = load_output(job_directory)
+    add_job_input(file_input_without_filename)
+    with pytest.raises(SystemExit):
+        Analyzer(job_directory).report({})
+    output = load_job_output()
 
     assert output == {
         "success": False,
