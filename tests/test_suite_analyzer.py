@@ -1,33 +1,29 @@
 #!/usr/bin/env python
-# coding: utf-8
+# -*- coding: utf-8 -*-
 
 import os
 import sys
 import json
 import unittest
 
-from io import open
 from cortexutils.analyzer import Analyzer
 
-# Different lib when using python3 or 2
-if sys.version_info >= (3, 0):
-    from io import StringIO
-else:
-    from StringIO import StringIO
+from io import StringIO
 
 
 def load_test_fixture(fixture_path):
-    path = os.path.dirname(os.path.abspath(__file__))
-    fixture_file = open(path + "/" + fixture_path)
-    input = fixture_file.read()
-    fixture_file.close()
+    tests_dir = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(tests_dir, fixture_path)
+    with open(file_path) as fixture_file:
+        input = fixture_file.read()
     sys.stdin = StringIO(input)
     sys.stdout = StringIO()
 
 
 class TestMinimalConfig(unittest.TestCase):
     def setUp(self):
-        load_test_fixture("fixtures/test-minimal-config.json")
+        fixture_path = os.path.join("fixtures", "test-minimal-config.json")
+        load_test_fixture(fixture_path)
         self.analyzer = Analyzer()
 
     def test_default_config(self):
@@ -49,7 +45,8 @@ class TestMinimalConfig(unittest.TestCase):
 
 class TestProxyConfig(unittest.TestCase):
     def setUp(self):
-        load_test_fixture("fixtures/test-proxy-config.json")
+        fixture_path = os.path.join("fixtures", "test-proxy-config.json")
+        load_test_fixture(fixture_path)
         self.analyzer = Analyzer()
 
     def test_proxy_config(self):
@@ -64,7 +61,8 @@ class TestProxyConfig(unittest.TestCase):
 
 class TestTlpConfig(unittest.TestCase):
     def setUp(self):
-        load_test_fixture("fixtures/test-tlp-config.json")
+        fixture_path = os.path.join("fixtures", "test-tlp-config.json")
+        load_test_fixture(fixture_path)
         self.analyzer = Analyzer()
 
     def test_check_tlp_disabled(self):
@@ -95,7 +93,8 @@ class TestTlpConfig(unittest.TestCase):
 
 class TestErrorResponse(unittest.TestCase):
     def setUp(self):
-        load_test_fixture("fixtures/test-error-response.json")
+        fixture_path = os.path.join("fixtures", "test-error-response.json")
+        load_test_fixture(fixture_path)
         self.analyzer = Analyzer()
 
     def test_error_response(self):
@@ -130,7 +129,8 @@ class TestErrorResponse(unittest.TestCase):
 
 class TestReportResponse(unittest.TestCase):
     def setUp(self):
-        load_test_fixture("fixtures/test-report-response.json")
+        fixture_path = os.path.join("fixtures", "test-report-response.json")
+        load_test_fixture(fixture_path)
         self.analyzer = Analyzer()
 
     def test_report_response(self):

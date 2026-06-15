@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 """
 This contains the unit tests for the extractor.
 """
@@ -15,13 +17,6 @@ class TestExtractorValidInput(unittest.TestCase):
         self.extractor = Extractor()
 
     def test_single_fqdn(self):
-        self.assertEqual(
-            self.extractor.check_string(value="www.google.de"),
-            "fqdn",
-            "FQDN single string: wrong data type.",
-        )
-
-    def test_single_fqdn_as_unicode(self):
         self.assertEqual(
             self.extractor.check_string(value="www.google.de"),
             "fqdn",
