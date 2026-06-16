@@ -194,7 +194,6 @@ class Worker:
                 self.error(message)
             return default
 
-    # def error(self, message: str, ensure_ascii: bool = False):
     def error(self, message: str, ensure_ascii: bool = False) -> NoReturn:
         """Stop analyzer with an error message.
 
