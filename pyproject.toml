@@ -42,6 +42,9 @@ dev = ["cortexutils[audit, lint, test, build]", "nox"]
 [tool.setuptools.packages.find]
 include = ["cortexutils*"]
 
+[tool.setuptools.package-data]
+cortexutils = ["py.typed"]
+
 [tool.coverage.run]
 omit = ["tests/*"]
 
